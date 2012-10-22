@@ -1,0 +1,307 @@
+<?php
+
+function calles_correos_devolver_tipo_via($codigo){
+	
+	$query = db_result(db_query("SELECT CODVIA.descvia FROM {POSTALT}
+							LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia 
+							WHERE POSTALT.idregistro=%d LIMIT 15",$codigo));	
+	//si es vacio, se sabe por la documentacion de las tablas que es calle el tipo de via.
+	if(!empty($codigo) && $query==null && is_numeric($codigo)){
+		$query = "CALLE";
+	}
+	
+	return $query;
+}
+
+function calles_correos_devolver_via_codigo_registro($codigo){
+	
+	$query = db_result(db_query("SELECT viapobla FROM {POSTALT}
+								 WHERE POSTALT.idregistro=%d LIMIT 15", $codigo));
+	return $query;
+}
+
+function calles_correos_devolver_codigo_postal($codigo){
+	
+	$query = db_result(db_query("SELECT codigo_postal FROM {POSTALT} 
+								WHERE POSTALT.idregistro=%d LIMIT 15", $codigo));
+	return $query;
+}
+function calles_correos_devolver_provincia($codigo){
+
+	//sql antigua cuando teniamos las dos tablas de codmun y codciu
+	
+	/**$sql = "SELECT if( POSTALT.cmun =0, (SELECT descripcion FROM CODCIU WHERE CODCIU.codlocalidad = POSTALT.codlocalidad), ("
+		."SELECT descripcion FROM CODMUN WHERE CODMUN.cpro = POSTALT.cpro AND CODMUN.cmun = POSTALT.cmun) ) AS nombrePoblacion FROM POSTALT "
+		."WHERE POSTALT.idregistro = '%s'";		
+		$query = db_result(db_query($sql,$codigo));*/
+	$query = db_result(db_query("SELECT CODCIU.descripcion FROM POSTALT,CODCIU where POSTALT.codlocalidad = CODCIU.codlocalidad and POSTALT.idregistro = %s",$codigo));	
+
+		
+	return $query;
+	
+}
+
+function calles_correos_autocomplete($string = ''){
+	
+     $matches = array();
+     //elimino espacios en blanco del final del string
+     $string = rtrim($string);
+     //convertir toda la cadena a mayusculas 
+     $string = mb_strtoupper($string); //para que no haya problemas como con el strtoupper al pasar a mayusculas con la letra ñ.
+     //eliminar tildes
+     $cad = calles_correos_eliminar_tildes($string);
+     //a la hora de hacer la comparación para autocompletar es donde tendré que ver si ha encontrado alguna cadena
+     //igual a lo intruducido. Si no, entonces hacemos las posibles búsquedas por los patrones. 
+     $copia=$cad;
+	 $copia = '%' . $copia .'%';
+	 
+	 $cadena1 = calles_correos_errores_mnb($cad,$copia);
+  	 $cadena2 = calles_correos_errores($cadena1,$copia);
+     $cadena3 = calles_correos_faltas_h($cadena2,$copia);
+     $cadena4 = calles_correos_art_prep($cadena3,$copia); //$cad,$copia;
+     $cadena = "(" .$cad . "|" . $cadena1. "|" . $cadena2. "|" . $cadena3 . "|" . $cadena4 . ")";  
+	 //bucle que cada dos porcentajes sustituya por uno. 
+ 	
+ 	 $cadporc = $copia;
+  	while(strpos($cadporc,'%%')!==FALSE){
+		$cadporc = str_replace('%%','%',$cadporc);
+ 	}	
+ 	
+     $compLike = $cadporc;
+     $matches = calles_correos_busqueda_coincidencias($cadena,$compLike);
+          //ORDENAMOS EL ARRAY CON LAS COMPARACIONES ENCONTRADAS.
+     $copiaordenacion = array();
+	 $ordenacion = $matches;
+   	 $distancia = -1;
+   	 $arraylev = array();
+   	 foreach($ordenacion as $key=>$value){
+   		//saco la via pobla
+   		$viapobla=$ordenacion[$key]['viapobla'];
+   		//cuanto de iguales son $cad(introducida) y la encontrada
+   		$lev = levenshtein(strtoupper($cad),$viapobla);
+   		$arraylev[$key] =$lev;
+   		if($lev == 0){
+   			//son iguales
+   			$copiaordenacion[$key] = $ordenacion[$key];
+   			$distancia = 0;
+   			ordenar_distancia_lev($cad,$distancia,$key,$copiaordenacion);
+   			
+    		}
+   		//si no son iguales, veo como ordenar.
+  		 else{
+   			$distancia = $lev; //guardo la distancia menor
+   			$copiaordenacion[$key] = $ordenacion[$key]; 
+   			ordenar_distancia_lev($cad,$distancia,$key,$copiaordenacion);
+   			//copiaordenacion array con todas las distancias levenshtein ordenadas.
+   		}
+  		
+   	}
+	
+   	//ordenar por impar-inferior : vias con mismo nombre de calle, ciudad, provincia.
+   	$copia = array();
+   	foreach($copiaordenacion as $k=>$v){
+   		$viapobla1=$copiaordenacion[$k]['viapobla'];
+   			foreach($copiaordenacion as $k2=>$v2){
+   					if($copiaordenacion[$k]['idregistro']!=$copiaordenacion[$k2]['idregistro']){
+                	//no es el mismo registro
+   					$viapobla2=$copiaordenacion[$k2]['viapobla'];
+   				
+   					if($viapobla1 === $viapobla2){
+   							//tienen misma via
+						$ciudad1=$copiaordenacion[$k]['ciudad'];
+						$ciudad2=$copiaordenacion[$k2]['ciudad'];
+   						if($ciudad1 == $ciudad2){
+						//tienen misma ciudad. Ordenar de menios a más por impar inferior
+							$imparinf1 = $copiaordenacion[$k]['nimparinf'];
+							$imparinf2 = $copiaordenacion[$k2]['nimparinf'];
+							if($imparinf1<$imparinf2){
+									$copia[$k2]=$copiaordenacion[$k2];
+									$copiaordenacion[$k2] = $copiaordenacion[$k];
+									$copiaordenacion[$k] = $copia[$k2];
+							}
+						}
+					}
+   						}
+   				}
+   			}
+	
+   	//formato para el navegador
+   	$array_devolver = array();
+   	foreach ($copiaordenacion as $match){
+   		
+   		$array_devolver[$match['idregistro']] =  		
+		  						 '<span class = "muestra_calle"><b>' . $match['tipovia'] . ' ' . '</b></span>' .
+		  												  '<span class = "muestra_viapobla">'  . $match['viapobla'] . ' ' . '</span>' .
+   		  												  '<span class = "muestra_nimparinf">'	. $match['nimparinf'] . '-' . '</span>'.
+   														  '<span class = "muestra_nimparsup">' . $match['nimparsup'] . ' ' . '</span>'.
+   														  '<span class = "muestra_nparinf">' . $match['nparinf']. '-' . '</span>'.
+   														  '<span class = "muestra_nparsup">' . $match['nparsup'] . ' ' . '</span>'.
+		  												  '<span class = "muestra_idregistro">' . $match['idregistro']  . ' '. '</span>' .
+		  												  '<span class = "muestra_cp">'. $match['codigo_postal']  . ' ' . '</span>' .
+		  												  '<span class = "muestra_descripcion">' . $match['ciudad'] . ' ' . '</span>';
+		  						  
+		  				
+	}
+	
+    drupal_json($array_devolver); 
+}
+//ordenacion distancia de lev 
+function ordenar_distancia_lev($cad,$distancia,$key,&$copiaordenacion){
+		
+	$copia = array();
+   	foreach($copiaordenacion as $key2=>$value2){
+   				//saco la via pobla
+   				///$registro = explode('#',$copiaordenacion[$key2]); //$ordenacion
+   				//$viapobla = $registro[1];
+   				
+   				$viapobla=$copiaordenacion[$key2]['viapobla'];
+   				//cuanto de iguales son $cad(introducida) y la encontrada
+   				$lev = levenshtein(strtoupper($cad),$viapobla);
+   				if($lev>$distancia){
+ 				
+   					$copia[$key2]=$copiaordenacion[$key2];
+   					$copiaordenacion[$key2]=$copiaordenacion[$key];
+   				  	$copiaordenacion[$key] = $copia[$key2];
+ 
+   				}		
+   						
+   			
+   	
+   			}
+}
+
+function calles_correos_errores($string,&$cadena2){
+	$cadena1 = $string;
+	$patrones = array();
+		$patrones[0] = '/[BV]/';
+		$patrones[1] = '/(LL|Y|I)/';
+		$patrones[2] = '/[GXJ]/';
+		$patrones[3] = '/(C|K|QU)/';
+		$patrones[4] = '/(N|Ñ)/';
+	$sustituciones = array();
+		$sustituciones[0] = '[BV]';
+		$sustituciones[1] = '(LL|Y|I)';
+		$sustituciones[2] = '(G|X|J)';
+		$sustituciones[3] = '(C|K|QU)';
+		$sustituciones[4] = '(N|Ñ)';
+	$cadena = preg_replace($patrones, $sustituciones, $cadena1);
+   	$cadena2= preg_replace($patrones, '%', $cadena2);
+	return $cadena;
+}
+//COMPRUEBA EN LA CADENA INTRODUCIDA, QUE SI HAY ESPACIOS, PUEDE TENER ESTA SERIE DE
+//PREPOSICIONES O DE ARTICULOS O NADA.
+function calles_correos_art_prep($string,&$cadena2){
+	
+	$cadena1 = $string;
+	$patrones = array();
+		$patrones[0] = '/ /';
+	$sustituciones = array();
+		$sustituciones[0] = '( EL | LA | LOS | LAS | EN | UN | DE | DEL | Y | DE EL | DE LA | DE LOS | DE LAS | | ")';
+	$cadena = preg_replace($patrones,$sustituciones,$cadena1);
+	$cadena2 = preg_replace($patrones,'%',$cadena2);
+	return $cadena;
+}
+//SQL QUE LE PASAMOS LA EXPRESION REGULAR YA FORMADA 
+//CON TODAS LOS POSIBLES ERRORES AL INTRODUCIR POR TECLADO.
+//HACE LA BUSQUEDA CON REGEXP Y SI ENCUENTRA VALORES, LO DEVUELVE EN UN ARRAY
+//DE LA FORMA IDREGISTRO->VIAPOBLA
+function calles_correos_busqueda_coincidencias($string,$compLike){
+	$inicio =time();
+	$matches = array();
+//la busqueda inicial no ha devuelto nada. Posibles errores gramaticales.	
+	if ($string) {
+  		$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
+  				num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
+  				 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
+  				 LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE viapobla LIKE '%s' AND viapobla REGEXP '%s'";
+
+    	$result = db_query_range(db_rewrite_sql($sql),$compLike,$string, 0, 15); // only 15 results will show
+    		while ($user = db_fetch_object($result)) {
+    			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
+    			if($user->descvia==null){
+					$calle = "CALLE";
+				}
+				else{
+					$calle = $user->descvia;
+				}
+		  		$matches[$user->idregistro] = 		array("tipovia" => $calle, 
+		  		 				  "viapobla" => $user->viapobla,
+		  		 				  "idregistro" => $user->idregistro,
+		  		 			      "codigo_postal" => $user->codigo_postal,
+		  		 				  "ciudad" => $user->descripcion,
+		  						  "nimparinf" => $user->num_impar_inferior,
+		  						  "nimparsup" => $user->num_impar_superior,
+		  						  "nparinf" => $user->num_par_inferior,
+		  						  "nparsup" => $user-> num_par_superior);  		
+		  						/** '<span class = "muestra_calle"><b>' . $calle .'</b></span>' .
+		  												  '<span class = "muestra_viapobla">' . $user->viapobla . '</span>' .
+		  												  '<span class = "muestra_idregistro">' . $user->idregistro . '</span>' .
+		  												  '<span class = "muestra_cp">'. $user->codigo_postal . '</span>' .
+		  												  '<span class = "muestra_descripcion">' . $user-> descripcion . '</span>';		*/		  
+		  									//check_plain($calle."#".$user->viapobla."#".$user->idregistro."#".$user->codigo_postal."#".$user->descripcion);
+    		}
+    		
+  	}
+  	$final =time();
+  	$total = $final - $inicio;
+	return $matches;
+}
+//COMPROBAR QUE TENGAMOS UNA H O NINGUNA EN CUALQUIER POSICION DE LA PALABRA. 
+//ASI SE VERIFICA QUE OMITAMOS H INTERCALADAS, AL PRINCIPIO Y DEMÁS.
+function calles_correos_faltas_h($cadena,&$copia){
+
+	$longitud = strlen($cadena);
+	for($i=0;$i<$longitud;$i++){
+		$cadena2 = $cadena2 . 'H?'.mb_substr($cadena,$i,1); //por ejemplo para que no haya problemas con la ñ
+	}
+	//BUCLE Y CADENA PARA LA COMPARACION DEL LIKE.
+	for($j=0;$j<strlen($copia);$j++){
+		$copia2=$copia2.'%'.substr($copia,$j,1);
+	}
+	$copia = $copia2;
+	return $cadena2;
+}
+//ELIMINAR TILDES PALABRA ORIGINAL CASTELLANAS, CATALANAS Y DIERESIS
+function calles_correos_eliminar_tildes($string){
+	
+	$cadena1 = $string;
+	$patrones = array();
+		$patrones[0] = '/(Á|À|Ä)/';
+		$patrones[1] = '/(É|È|Ë)/';
+		$patrones[2] = '/(Í|Ì|Ï)/';
+		$patrones[3] = '/(Ó|Ò|Ö)/';
+		$patrones[4] = '/(Ú|Ù|Ü)/';
+	$sustituciones = array();
+		$sustituciones[0] = 'A';
+		$sustituciones[1] = 'E';
+		$sustituciones[2] = 'I';
+		$sustituciones[3] = 'O';
+		$sustituciones[4] = 'U';
+	$cadena = preg_replace ($patrones, $sustituciones,$cadena1);
+	return $cadena;
+}
+
+//comprueba palabras que se escriben con x pero suenan como j.
+//segun lo que he encontrado hay 3 de ese estilo: 
+// mexico, oaxaca, texas
+//y palabras que tengan nb, mb,mp etc.
+function calles_correos_errores_mnb($string,&$cadena2){
+	
+	$cadena1 = $string;
+	$patrones = array();
+		$patrones[0] = '/(NB|MB|NV|MV)/';
+		$patrones[1] = '/(NP|MP)/';
+		$patrones[2] = '/(TX|TZ|CH)/';
+		$patrones[3] = '/(GU|G)/';
+		$patrones[4] = '/(RR|R)/';
+	$sustituciones = array();
+		$sustituciones[0] = '(NB|MB|NV|MV)';
+		$sustituciones[1] = '(NP|MP)';
+		$sustituciones[2] = '(TX|TZ|CH)';
+		$sustituciones[3] = '(GU|G)';
+		$sustituciones[4] = '(RR|R)';
+	$cadena = preg_replace ($patrones, $sustituciones, $cadena1);
+	$cadena2=preg_replace($patrones, '%', $cadena2);
+	return $cadena;
+}
+
