@@ -41,7 +41,7 @@ function calles_correos_devolver_provincia($codigo){
 	
 }
 
-function calles_correos_autocomplete($string = ''){
+function calles_correos_autocomplete($string = '', $provincia){
 	
      $matches = array();
      //elimino espacios en blanco del final del string
@@ -68,7 +68,7 @@ function calles_correos_autocomplete($string = ''){
  	}	
  	
      $compLike = $cadporc;
-     $matches = calles_correos_busqueda_coincidencias($cadena,$compLike);
+     $matches = calles_correos_busqueda_coincidencias($cadena,$compLike,$provincia);
           //ORDENAMOS EL ARRAY CON LAS COMPARACIONES ENCONTRADAS.
      $copiaordenacion = array();
 	 $ordenacion = $matches;
@@ -136,7 +136,7 @@ function calles_correos_autocomplete($string = ''){
    														  '<span class = "muestra_nimparsup">' . $match['nimparsup'] . ' ' . '</span>'.
    														  '<span class = "muestra_nparinf">' . $match['nparinf']. '-' . '</span>'.
    														  '<span class = "muestra_nparsup">' . $match['nparsup'] . ' ' . '</span>'.
-		  												  '<span class = "muestra_idregistro">' . $match['idregistro']  . ' '. '</span>' .
+		  												 // '<span class = "muestra_idregistro">' . $match['idregistro']  . ' '. '</span>' .
 		  												  '<span class = "muestra_cp">'. $match['codigo_postal']  . ' ' . '</span>' .
 		  												  '<span class = "muestra_descripcion">' . $match['ciudad'] . ' ' . '</span>';
 		  						  
@@ -205,17 +205,26 @@ function calles_correos_art_prep($string,&$cadena2){
 //CON TODAS LOS POSIBLES ERRORES AL INTRODUCIR POR TECLADO.
 //HACE LA BUSQUEDA CON REGEXP Y SI ENCUENTRA VALORES, LO DEVUELVE EN UN ARRAY
 //DE LA FORMA IDREGISTRO->VIAPOBLA
-function calles_correos_busqueda_coincidencias($string,$compLike){
+function calles_correos_busqueda_coincidencias($string,$compLike,$provincia){
 	$inicio =time();
 	$matches = array();
 //la busqueda inicial no ha devuelto nada. Posibles errores gramaticales.	
 	if ($string) {
-  		$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
+		if(empty($provincia)){
+  			$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
   				num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
   				 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
   				 LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE viapobla LIKE '%s' AND viapobla REGEXP '%s'";
-
-    	$result = db_query_range(db_rewrite_sql($sql),$compLike,$string, 0, 15); // only 15 results will show
+  			$result = db_query_range(db_rewrite_sql($sql),$compLike,$string, 0, 15);
+		}
+		else {
+				$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
+  				num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
+  				 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
+  				 LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE CODCIU.descripcion='%s' and viapobla LIKE '%s' AND viapobla REGEXP '%s'";
+			$result = db_query_range(db_rewrite_sql($sql),$provincia,$compLike,$string, 0, 15);
+		}
+    	 // only 15 results will show
     		while ($user = db_fetch_object($result)) {
     			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
     			if($user->descvia==null){
