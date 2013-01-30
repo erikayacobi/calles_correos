@@ -20,6 +20,25 @@ function calles_correos_devolver_tipo_via($codigo){
 	
 	return $query;
 }
+function calles_correos_devolver_datos_registro($codigo){	
+	$sql = "SELECT POSTALT.codvia, POSTALT.viapobla, POSTALT.codigo_postal, CODCIU.descripcion FROM {POSTALT} ".
+		    //"LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia ". 
+			"LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ". 
+			"WHERE POSTALT.idregistro=%d";	
+	$result = db_query($sql, $codigo);
+	$datos = array();
+	while ($data = db_fetch_array($result)){
+
+		$datos['localidad'] = $data['descripcion'];
+		$datos['codigo_postal'] = $data['codigo_postal'];
+		$datos['calle'] = $data['viapobla'];	
+		$datos['tipovia'] = $data['codvia'];
+		if(is_null($data['codvia'])||empty($data['codvia']))$datos['tipovia'] = 'CL';
+	}
+	return $datos;
+}
+
+
 
 
 function calles_correos_devolver_via_codigo_registro($codigo){
@@ -237,7 +256,7 @@ function calles_correos_busqueda_coincidencias($string,$compLike,$provincia){
 		  						  "nimparsup" => $user->num_impar_superior,
 		  						  "nparinf" => $user->num_par_inferior,
 		  						  "nparsup" => $user-> num_par_superior);  		
-		  						/** '<span class = "muestra_calle"><b>' . $calle .'</b></span>' .
+		  						/* '<span class = "muestra_calle"><b>' . $calle .'</b></span>' .
 		  												  '<span class = "muestra_viapobla">' . $user->viapobla . '</span>' .
 		  												  '<span class = "muestra_idregistro">' . $user->idregistro . '</span>' .
 		  												  '<span class = "muestra_cp">'. $user->codigo_postal . '</span>' .
