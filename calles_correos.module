@@ -197,7 +197,8 @@ function calles_correos_autocomplete($string = '', $provincia){
    				}
    			}
     
-	return $copiaordenacion;
+		
+   	return $copiaordenacion;
   
 }
 function busquedaExacta($cad){
@@ -256,10 +257,8 @@ function ordenar_distancia_lev($cad,$distancia,$key,&$copiaordenacion){
    				  	$copiaordenacion[$key] = $copia[$key2];
  
    				}		
-   						
-   			
    	
-   			}
+   		}
 }
 
 function calles_correos_errores($string,&$cadena2){
@@ -323,7 +322,7 @@ function calles_correos_busqueda_coincidencias($string,$compLike,$compLike1,$com
 				
 				
 			//nueva, válida
-			$ini2 = time();
+			//$ini2 = time();
 			if(!empty($arrayId)){
   				$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
   						num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
@@ -343,9 +342,9 @@ function calles_correos_busqueda_coincidencias($string,$compLike,$compLike1,$com
   				$result = db_query_range($sql,array($compLike,$compLike1,$compLike2,$compLike3,$compLike4,$string),0,40);
 			}
   
-  			$fin2 = time();
+  			/*$fin2 = time();
   			$total2 = $fin2-$ini2;
-  			drupal_set_message("tiempo select provincia vacia nuevo $total2.");
+  			drupal_set_message("tiempo select provincia vacia nuevo $total2.");*/
 			
 		}
 		else {
@@ -363,7 +362,7 @@ function calles_correos_busqueda_coincidencias($string,$compLike,$compLike1,$com
 			//NUEVA, VÁLIDA
 			
 			if(!empty($arrayId)){
-			$ini4 = time();
+			//$ini4 = time();
 				$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
   				num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
   				 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
@@ -381,9 +380,9 @@ function calles_correos_busqueda_coincidencias($string,$compLike,$compLike1,$com
   				 AND viapobla REGEXP '%s'";
 					$result = db_query_range($sql,array($provincia,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,$string), 0, 40);
 			}
-			$fin4 = time();
+		/*	$fin4 = time();
 			$total4 = $fin4 - $ini4;
-			drupal_set_message("tiempo select provincia no vacia nueva $total4.");
+			drupal_set_message("tiempo select provincia no vacia nueva $total4.");*/
 		}
     	 // only 15 results will show
     		while ($user = db_fetch_object($result)) {
