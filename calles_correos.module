@@ -70,10 +70,9 @@ function calles_correos_devolver_poblacion($codigo){
 }
 
 function calles_correos_autocomplete($string = '', $provincia){
-	 $inicioi = time();//getdate(time());
-	 
-	// $fecha = date("G:i:s");
-	// drupal_set_message("INICIO AUTOCOMPLETE $fecha.");
+	 $inicioi = time();
+	$totalLongitudMostrar = 60;
+	
      //elimino espacios en blanco del final del string
      $string = rtrim($string);
      //convertir toda la cadena a mayusculas 
@@ -82,49 +81,67 @@ function calles_correos_autocomplete($string = '', $provincia){
      $cad = calles_correos_eliminar_tildes($string);
      //a la hora de hacer la comparación para autocompletar es donde tendré que ver si ha encontrado alguna cadena
      //igual a lo intruducido. Si no, entonces hacemos las posibles búsquedas por los patrones. 
-     $copia=$cad;
-	 $copia = '%' . $copia .'%';
-	 
-	 $compLike = $copia;//$cad .'%';
-	 
-	 
-	 $cadena1 = calles_correos_errores_mnb($cad,$copia);
-	 $cad1like = $copia;
-	 
-	 $copia = $cad;
-	 $compLike1=quitarDoblePorCiento($cad1like);
-	 
-	 $cadena2 = calles_correos_errores($cadena1,$copia); //$compLike1
-     $cad2like = $copia;
-	 $copia = $cad;
-	 $compLike2=quitarDoblePorCiento($cad2like);
-	 
-	 $cadena3 = calles_correos_faltas_h($cadena2,$copia); //$compLike2
-     $cad3like = $copia;
-	 $copia = $cad;
-	 $compLike3=quitarDoblePorCiento($cad3like);
-	 
-	 $cadena4 = calles_correos_art_prep($cadena3,$copia); //$compLike3
-     $cad4like = $copia;
-     //volvemos a la cadena inicial por si necesito otra,
-	 $copia = $cad;
-	 $compLike4=quitarDoblePorCiento($cad4like);
-	 
-	 $cadena = "(" .$cad . "|" . $cadena1. "|" . $cadena2. "|" . $cadena3 . "|" . $cadena4 . ")";  
-	 //bucle que cada dos porcentajes sustituya por uno. 
- 	//$compLike=quitarDoblePorCiento($cad);
- 	/* $cadporc = $copia;
-  	while(strpos($cadporc,'%%')!==FALSE){
-		$cadporc = str_replace('%%','%',$cadporc);
- 	}	
- 	
-     $compLike = $cadporc;*/
-	 $inicio = time();
-     $matches = calles_correos_busqueda_coincidencias($cadena,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,$provincia); //$matches = calles_correos_busqueda_coincidencias($cadena,$compLike,$provincia);
-          //ORDENAMOS EL ARRAY CON LAS COMPARACIONES ENCONTRADAS.
+    
+   
+    //todo a mayusculas y sin tildes.
+     $matches1=busquedaExacta($cad.'%');
+   
+     //guardo en $arrayId todos los Id's que hemos encontrado en la primera búsqueda.
+     //teniendo en cuenta que $matches1, es un array cuyos índices son las claves
+     $arrayId = array_keys($matches1);
+     //tamaño del array tras realizar la primera busqueda
+     $longitud = sizeof($matches1);
+	 //si despues de la primera busqueda no hemos encontrado el minimo de registros necesarios,
+	 //seguimos buscando.
+     if($longitud<$totalLongitudMostrar){
+     	 $copia=$cad;
+     	 $copia = '%' . $copia .'%';
 
-	 $final = time();
-	 $total = $final-$inicio;     
+     	 $compLike = $copia;
+	 	 $cadena1 = calles_correos_errores_mnb($cad,$copia);
+	 	 $cad1like = $copia;
+	
+	     $copia = $cad;
+	     $compLike1=quitarDoblePorCiento($cad1like);
+	 
+	     $cadena2 = calles_correos_errores($cadena1,$copia); //$copia //$compLike1
+	 		//$cad2like = $compLike1;
+	     $cad2like = $copia;
+	     $copia = $cad;
+	     
+	     $compLike2=quitarDoblePorCiento($cad2like);
+	 
+	     $cadena3 = calles_correos_faltas_h($cadena2,$copia); //$copia //$compLike2
+     	 //$cad3like = $compLike2;
+	     $cad3like = $copia;
+	 	 $copia = $cad;
+	 	 $compLike3=quitarDoblePorCiento($cad3like);
+	 
+		 $cadena4 = calles_correos_art_prep($cadena3,$copia); //$copia //$compLike3
+     	 //$cad4like = $compLike3;
+		  $cad4like = $copia;
+   		  //volvemos a la cadena inicial por si necesito otra,
+	 	 $copia = $cad;
+	 	 
+	 	 $compLike4=quitarDoblePorCiento($cad4like);
+	 
+	 	 $cadena = "(" .$cad . "|" . $cadena1. "|" . $cadena2. "|" . $cadena3 . "|" . $cadena4 . ")";  
+
+		 $inicio = time();
+    	 $matches2 = calles_correos_busqueda_coincidencias($cadena,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,$provincia,$arrayId); //$matches = calles_correos_busqueda_coincidencias($cadena,$compLike,$provincia);
+          //ORDENAMOS EL ARRAY CON LAS COMPARACIONES ENCONTRADAS.
+    	 if(sizeof($matches1)>0 && sizeof($matches2)>0)
+    	 //unifico las dos busquedas encontradas
+    	 	$matches = array_merge ($matches1,$matches2);
+    	 else if(sizeof($matches1)<1){
+    	 	$matches = $matches2;
+    	 }
+    	 else if(sizeof($matches2)<1) 
+    	 	$matches = $matches1;
+	 }
+     else {
+         $matches = $matches1;
+     }
      $copiaordenacion = array();
 	 $ordenacion = $matches;
    	 $distancia = -1;
@@ -179,9 +196,10 @@ function calles_correos_autocomplete($string = '', $provincia){
    						}
    				}
    			}
+    
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-   /*		$array_devolver = array();
+ 	$array_devolver = array();
    	foreach ($copiaordenacion as $match){
    		
    		$array_devolver[$match['idregistro']] =  		
@@ -198,13 +216,66 @@ function calles_correos_autocomplete($string = '', $provincia){
 	}
 	
     drupal_json($array_devolver); 		
-   			
-   		*/	
-   			
-  
-	return $copiaordenacion;
+ 
+	//return $copiaordenacion;
   
 }
+function busquedaExacta($cad){
+	  $sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
+  				num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
+  				 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
+  				 LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE viapobla LIKE '%s' ORDER BY viapobla ASC";
+  			$result = db_query_range($sql,$cad,0,60);
+     while ($user = db_fetch_object($result)) {
+    			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
+    			if($user->descvia==null){
+					$calle = "CALLE";
+				}
+				else{
+					$calle = $user->descvia;
+				}
+		  		$matches[$user->idregistro] = 		array("tipovia" => $calle, 
+		  		 				  "viapobla" => $user->viapobla,
+		  		 				  "idregistro" => $user->idregistro,
+		  		 			      "codigo_postal" => $user->codigo_postal,
+		  		 				  "ciudad" => $user->descripcion,
+		  						  "nimparinf" => $user->num_impar_inferior,
+		  						  "nimparsup" => $user->num_impar_superior,
+		  						  "nparinf" => $user->num_par_inferior,
+		  						  "nparsup" => $user-> num_par_superior);  		
+		      		}
+
+		return $matches;
+     
+}
+
+/*function busquedaExacta2($cad,$cad2){
+		  $sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
+  				num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
+  				 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
+  				 LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE idregistro NOT IN $cad2 AND viapobla LIKE '%s' ORDER BY viapobla ASC";
+  			$result = db_query_range($sql,$cad,0,80);
+     while ($user = db_fetch_object($result)) {
+    			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
+    			if($user->descvia==null){
+					$calle = "CALLE";
+				}
+				else{
+					$calle = $user->descvia;
+				}
+		  		$matches[$user->idregistro] = 		array("tipovia" => $calle, 
+		  		 				  "viapobla" => $user->viapobla,
+		  		 				  "idregistro" => $user->idregistro,
+		  		 			      "codigo_postal" => $user->codigo_postal,
+		  		 				  "ciudad" => $user->descripcion,
+		  						  "nimparinf" => $user->num_impar_inferior,
+		  						  "nimparsup" => $user->num_impar_superior,
+		  						  "nparinf" => $user->num_par_inferior,
+		  						  "nparsup" => $user-> num_par_superior);  		
+		      		}
+
+		return $matches;
+}*/
  //bucle que cada dos porcentajes sustituya por uno. 
 function quitarDoblePorCiento($cadena){
 	
@@ -274,10 +345,13 @@ function calles_correos_art_prep($string,&$cadena2){
 //CON TODAS LOS POSIBLES ERRORES AL INTRODUCIR POR TECLADO.
 //HACE LA BUSQUEDA CON REGEXP Y SI ENCUENTRA VALORES, LO DEVUELVE EN UN ARRAY
 //DE LA FORMA IDREGISTRO->VIAPOBLA
-function calles_correos_busqueda_coincidencias($string,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,$provincia){
+function calles_correos_busqueda_coincidencias($string,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,$provincia,$arrayId){
 	$inicio =time();
 	$matches = array();
-//la busqueda inicial no ha devuelto nada. Posibles errores gramaticales.	
+	//$arrayId => array donde guardamos los Id's de la primera busqueda realizada.
+	//$cadena una cadena de la forma (idregistro,idregistro,....) para en la segunda búsqueda no tener duplicados
+	 $cadena = "(".implode($arrayId,',').")";
+	//la busqueda inicial no ha devuelto nada. Posibles errores gramaticales.	
 	if ($string) {
 		if(empty($provincia)){
 			
@@ -297,20 +371,29 @@ function calles_correos_busqueda_coincidencias($string,$compLike,$compLike1,$com
 				
 				
 			//nueva, válida
-			//$ini2 = time();
-		
-  			$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
-  				num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
-  				 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
-  				 LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE (viapobla LIKE '%s' 
-  				 OR viapobla LIKE '%s' OR viapobla LIKE '%s' OR viapobla LIKE '%s'  OR viapobla LIKE '%s')
-  				 AND viapobla REGEXP '%s'";
-  			$result = db_query_range($sql,array($compLike,$compLike1,$compLike2,$compLike3,$compLike4,$string),0,40);
-  			
+			$ini2 = time();
+			if(!empty($arrayId)){
+  				$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
+  						num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
+  						LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
+  				        LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE idregistro NOT IN $cadena AND (viapobla LIKE '%s' 
+  				        OR viapobla LIKE '%s' OR viapobla LIKE '%s' OR viapobla LIKE '%s'  OR viapobla LIKE '%s')
+  				        AND viapobla REGEXP '%s'";
+  				$result = db_query_range($sql,array($compLike,$compLike1,$compLike2,$compLike3,$compLike4,$string),0,40);
+			}
+			else{
+				$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
+  						num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
+  						LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
+  				        LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE (viapobla LIKE '%s' 
+  				        OR viapobla LIKE '%s' OR viapobla LIKE '%s' OR viapobla LIKE '%s'  OR viapobla LIKE '%s')
+  				        AND viapobla REGEXP '%s'";
+  				$result = db_query_range($sql,array($compLike,$compLike1,$compLike2,$compLike3,$compLike4,$string),0,40);
+			}
   
-  			/*$fin2 = time();
+  			$fin2 = time();
   			$total2 = $fin2-$ini2;
-  			drupal_set_message("tiempo select provincia vacia nuevo $total2.");*/
+  			drupal_set_message("tiempo select provincia vacia nuevo $total2.");
 			
 		}
 		else {
@@ -327,7 +410,17 @@ function calles_correos_busqueda_coincidencias($string,$compLike,$compLike1,$com
 		*/
 			//NUEVA, VÁLIDA
 			
-		//$ini4 = time();
+			if(!empty($arrayId)){
+			$ini4 = time();
+				$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
+  				num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
+  				 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
+  				 LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE idregistro NOT IN $cadena AND CODCIU.descripcion='%s' and (viapobla LIKE '%s' 
+  				 or viapobla LIKE '%s' or viapobla LIKE '%s' or viapobla LIKE '%s')
+  				 AND viapobla REGEXP '%s'";
+					$result = db_query_range($sql,array($provincia,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,$string), 0, 40);
+			}
+			else {
 				$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
   				num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
   				 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
@@ -335,11 +428,10 @@ function calles_correos_busqueda_coincidencias($string,$compLike,$compLike1,$com
   				 or viapobla LIKE '%s' or viapobla LIKE '%s' or viapobla LIKE '%s')
   				 AND viapobla REGEXP '%s'";
 					$result = db_query_range($sql,array($provincia,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,$string), 0, 40);
-			//$fin4 = time();
-		//	$total4 = $fin4 - $ini4;
-			
-			//drupal_set_message("tiempo select provincia no vacia nueva $total4.");
-					//$result = db_query_range(db_rewrite_sql($sql),$provincia,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,$string, 0, 40);
+			}
+			$fin4 = time();
+			$total4 = $fin4 - $ini4;
+			drupal_set_message("tiempo select provincia no vacia nueva $total4.");
 		}
     	 // only 15 results will show
     		while ($user = db_fetch_object($result)) {
