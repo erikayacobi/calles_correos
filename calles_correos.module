@@ -197,27 +197,7 @@ function calles_correos_autocomplete($string = '', $provincia){
    				}
    			}
     
-	// Quitar desde array_devolver hasta drupal_json 
-	//descomentar return 
- 	$array_devolver = array();
-   	foreach ($copiaordenacion as $match){
-   		
-   		$array_devolver[$match['idregistro']] =  		
-		  						 '<span class = "muestra_calle"><b>' . $match['tipovia'] . ' ' . '</b></span>' .
-		  												  '<span class = "muestra_viapobla">'  . $match['viapobla'] . ' ' . '</span>' .
-   		  												  '<span class = "muestra_nimparinf">'	. $match['nimparinf'] . '-' . '</span>'.
-   														  '<span class = "muestra_nimparsup">' . $match['nimparsup'] . ' ' . '</span>'.
-   														  '<span class = "muestra_nparinf">' . $match['nparinf']. '-' . '</span>'.
-   														  '<span class = "muestra_nparsup">' . $match['nparsup'] . ' ' . '</span>'.
-		  												  '<span class = "muestra_cp">'. $match['codigo_postal']  . ' ' . '</span>' .
-		  												  '<span class = "muestra_descripcion">' . $match['ciudad'] . ' ' . '</span>';
-		  						  
-		  				
-	}
-	
-    drupal_json($array_devolver); 		
- 
-	//return $copiaordenacion;
+	return $copiaordenacion;
   
 }
 function busquedaExacta($cad){
@@ -249,33 +229,6 @@ function busquedaExacta($cad){
      
 }
 
-/*function busquedaExacta2($cad,$cad2){
-		  $sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
-  				num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
-  				 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
-  				 LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE idregistro NOT IN $cad2 AND viapobla LIKE '%s' ORDER BY viapobla ASC";
-  			$result = db_query_range($sql,$cad,0,80);
-     while ($user = db_fetch_object($result)) {
-    			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
-    			if($user->descvia==null){
-					$calle = "CALLE";
-				}
-				else{
-					$calle = $user->descvia;
-				}
-		  		$matches[$user->idregistro] = 		array("tipovia" => $calle, 
-		  		 				  "viapobla" => $user->viapobla,
-		  		 				  "idregistro" => $user->idregistro,
-		  		 			      "codigo_postal" => $user->codigo_postal,
-		  		 				  "ciudad" => $user->descripcion,
-		  						  "nimparinf" => $user->num_impar_inferior,
-		  						  "nimparsup" => $user->num_impar_superior,
-		  						  "nparinf" => $user->num_par_inferior,
-		  						  "nparsup" => $user-> num_par_superior);  		
-		      		}
-
-		return $matches;
-}*/
  //bucle que cada dos porcentajes sustituya por uno. 
 function quitarDoblePorCiento($cadena){
 	
@@ -293,7 +246,6 @@ function ordenar_distancia_lev($cad,$distancia,$key,&$copiaordenacion){
    				//saco la via pobla
    				///$registro = explode('#',$copiaordenacion[$key2]); //$ordenacion
    				//$viapobla = $registro[1];
-   				
    				$viapobla=$copiaordenacion[$key2]['viapobla'];
    				//cuanto de iguales son $cad(introducida) y la encontrada
    				$lev = levenshtein(strtoupper($cad),$viapobla);
