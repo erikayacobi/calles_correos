@@ -216,7 +216,7 @@ function calles_correos_autocomplete($string = '', $provincia){
    			}
     // Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
- 	$array_devolver = array();
+ 	/*$array_devolver = array();
    	foreach ($copiaordenacion as $match){
    		
    		$array_devolver[$match['idregistro']] =  		
@@ -232,9 +232,9 @@ function calles_correos_autocomplete($string = '', $provincia){
 		  				
 	}
 	
-    drupal_json($array_devolver); 
+    drupal_json($array_devolver); */
 		
-   //	return $copiaordenacion;
+    return $copiaordenacion;
   
 }
 /*function construirCadComparacionLike($string){
