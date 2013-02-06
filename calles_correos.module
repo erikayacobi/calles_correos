@@ -111,12 +111,12 @@ function calles_correos_autocomplete($string = '', $provincia){
 	    $copia= '+'.implode($array,' +').'*';
      	 $compLike = $copia;
      	 //cadena regexp
-	 	 $cadena1 = calles_correos_errores_mnb($cad,$copia);
+	 	/* $cadena1 = calles_correos_errores_mnb($cad,$copia);
 	 	 $cadena2 = calles_correos_errores($cadena1,$copia); //$copia //$compLike1
 	     $cadena3 = calles_correos_faltas_h($cadena2,$copia); //$copia //$compLike2
 		 $cadena4 = calles_correos_art_prep($cadena3,$copia); //$copia //$compLike3
    
-	 	 $cadena = "(" .$cad . "|" . $cadena1. "|" . $cadena2. "|" . $cadena3 . "|" . $cadena4 . ")";  
+	 	 $cadena = "(" .$cad . "|" . $cadena1. "|" . $cadena2. "|" . $cadena3 . "|" . $cadena4 . ")";  */
 		 //$cadCompLike = construirCadComparacionLike($string);
 		 //CONSTRUCCION CADENA LIKE
 		 $cadena1 = $string;
@@ -231,7 +231,7 @@ function calles_correos_autocomplete($string = '', $provincia){
    			}
     // Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
- /*	$array_devolver = array();
+ 	$array_devolver = array();
    	foreach ($copiaordenacion as $match){
    		
    		$array_devolver[$match['idregistro']] =  		
@@ -248,8 +248,8 @@ function calles_correos_autocomplete($string = '', $provincia){
 	}
 	
     drupal_json($array_devolver); 
-		*/
-   return $copiaordenacion;
+		
+  // return $copiaordenacion;
   
 }
 function calles_correos_busqueda_coincidencias($cadc,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,$compLike5,$compLike6,$compLike7,$compLike8,$compLike9,
