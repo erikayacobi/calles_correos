@@ -103,7 +103,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 	 // como "cad" devuelve cadenas donde encuentre esa cadena de forma seguida en cualquier parte, 
 	 //si solo es una palabra, lo que no haya encontrado en la primera búsqueda no lo va a encontrar en la segunda
 	$pos = strpos($cad,' ');
-    if($pos!=false){
+ //  if ($pos!=false){
      if($longitud<$totalLongitudMostrar){
      	 $copia=$cad;
      	// $copia = '%' . $copia .'%'; 
@@ -121,7 +121,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 		 //CONSTRUCCION CADENA LIKE
 		 $cadena1 = $string;
 		 //Separo la funcion de mnb
-		 $compLike1 = preg_replace('/(NB|MB|NV|MV)/', '*', $cadena1);   //preg_replace('/NB|MB|NV|MV)/,'%',$cadena1);
+		 /*$compLike1 = preg_replace('/(NB|MB|NV|MV)/', '*', $cadena1);   //preg_replace('/NB|MB|NV|MV)/,'%',$cadena1);
 		 $compLike1 = quitarDoblePorCiento($compLike1);
 		 $compLike2 = preg_replace('/(NP|MP)/','*',$cadena1); // preg_replace('/(NP|MP)/','%',$cadena1);
 		 $compLike2 = quitarDoblePorCiento($compLike2);
@@ -143,20 +143,119 @@ function calles_correos_autocomplete($string = '', $provincia){
 		 $compLike10 = preg_replace('/(N|Ñ)/','*',$cadena1); //preg_replace('/(N|Ñ)/','%',$cadena1);
 		 $compLike10 = quitarDoblePorCiento($compLike10);
 
+		 */
+		 //str_replac more faster than preg_replace!!!
+	 $compLike1 = str_replace('NB', 'MB', $cadena1);   //preg_replace('/NB|MB|NV|MV)/,'%',$cadena1);
+		 $compLike2 = str_replace('NB','NV',$cadena1);
+		 $compLike3 = str_replace('NB','MV',$cadena1);
+		 $compLike4 = str_replace('MB','NB',$cadena1);
+		 $compLike5 = str_replace('MB','NV',$cadena1);
+		 $compLike6 = str_replace('MB','MV',$cadena1);
+		 $compLike7 = str_replace('NV','NB',$cadena1);
+		 $compLike8 = str_replace('NV','MB',$cadena1);
+		 $compLike9 = str_replace('NV','MV',$cadena1);
+		 $compLike10 = str_replace('MV','NB',$cadena1);
+		 $compLike11 = str_replace('MV','MB',$cadena1);
+		 $compLike12 = str_replace('MV','NV',$cadena1);
+		 $union1 = '>'.$cadena1.'+('.$compLike1.' '.$compLike2. ' '.$compLike3.' '.$compLike4.' '.$compLike5.' '.$compLike6.' '.$compLike7
+		 			.' '.$compLike8.' '.$compLike9.' '.$compLike10.' '.$compLike11.' '.$compLike12.')';
 		 
+		 $compLike13 = str_replace('NP','MP',$cadena1);
+		 $compLike14 = str_replace('MP','NP',$cadena1);
+		 $union2 = '>'.$cadena1.'+('.$compLike13.' '.$compLike14.')'; 
+		 
+		 $compLike15 = str_replace('TX','TZ',$cadena1);
+		 $compLike16 = str_replace('TX','CH',$cadena1);
+		 $compLike17 = str_replace('TZ','TX',$cadena1);
+		 $compLike18 = str_replace('TZ','CH',$cadena1);
+		 $compLike19 = str_replace('CH','TX',$cadena1);
+		 $compLike20 = str_replace('CH','TZ',$cadena1);
+		 $union3 = '>'.$cadena1. '+('.$compLike15.' '.$compLike16. ' '.$compLike17. ' '.$compLike18.' '.$compLike19.' '.$compLike20.')';
+		 
+		 
+		 $compLike21 = str_replace('GU','G',$cadena1);
+		 $compLike22= str_replace('G','GU',$cadena1);
+		 $union4 = '>'.$cadena1.'+('.$compLike21.' '.$compLike22.')';
+		 			
+			
+		 $compLike23 = str_replace('RR','R',$cadena1);
+		 $compLike24 = str_replace('R','RR',$cadena1);
+		 $union5 = '>'.$cadena1.'+('.$compLike23.' '.$compLike24.')';		
+		 
+		 $compLike25 = str_replace('B','V',$cadena1);
+		 $compLike26 = str_replace('V','B',$cadena1);
+		 $union6 = '>'.$cadena1.'+('.$compLike25.' '.$compLike26.')';
+		 
+		 $compLike27 = str_replace('LL','Y',$cadena1);
+		 $compLike28 = str_replace('LL','I',$cadena1);
+		 $compLike29 = str_replace('Y','LL',$cadena1);
+		 $compLike30 = str_replace('Y','I',$cadena1);
+		 $compLike31 = str_replace('I','LL',$cadena1);
+		 $compLike32 = str_replace('I','Y',$cadena1);
+		 $union7 = '>'.$cadena1.'+('.$compLike27.' '.$compLike28.' '.$compLike29.' '.$compLike30.' '.$compLike31.' '.$compLike32.')';
+		 
+		 $compLike33 = str_replace('G','X',$cadena1);
+		 $compLike34 = str_replace('G','J',$cadena1);
+		 $compLike35 = str_replace('X','G',$cadena1);
+		 $compLike36 = str_replace('X','J',$cadena1);
+		 $compLike37 = str_replace('J','G',$cadena1);
+		 $compLike38 = str_replace('J','X',$cadena1);
+		 $union8 = '>'.$cadena1.'+('.$compLike33.' '.$compLike34.' '.$compLike35.' '.$compLike36.' '.$compLike37.' '.$compLike38.')';
+
+         $compLike39 = str_replace('C','K',$cadena1);    	
+		 $compLike40 = str_replace('C','QU',$cadena1);
+		 $compLike41 = str_replace('K','C',$cadena1);
+		 $compLike42 = str_replace('K','QU',$cadena1);
+		 $compLike43 = str_replace('QU','C',$cadena1);
+		 $compLike44 = str_replace('QU','K',$cadena1);
+		 $union9 ='>'.$cadena1.'+('.$compLike39.' '.$compLike40.' '.$compLike41.' '.$compLike42.' '.$compLike43.' '.$compLike44.')';
+		 
+		 
+		 $compLike45 = str_replace('N','Ñ',$cadena1);
+		 $compLike46 = str_replace('Ñ','N',$cadena1);
+		 $union10 = '>'.$cadena1.'+('.$compLike45.' '.$compLike46.')';
+
 		 //faltas h
 		//BUCLE Y CADENA PARA LA COMPARACION DEL LIKE.
 		for($j=0;$j<strlen($cadena1);$j++){
-			$compLike11 = $compLike11.'*'.substr($cadena1,$j,1);
+			$compLike47 = $compLike47.'H'.substr($cadena1,$j,1);
 		}
-		$compLike11 = quitarDoblePorCiento($compLike11);
-		$compLike12 = preg_replace('/ /','*',$cadena1);
-		$compLike12 = quitarDoblePorCiento($compLike12);
+		$union11 = '>'.$cadena1.'+('.$compLike47.')';
+		//articulos/preposiciones.
+		//$sustituciones[0] = '( EL | LA | LOS | LAS | EN | UN | DE | DEL | Y | DE EL | DE LA | DE LOS | DE LAS | | ")';
+
+	$compLike48 = str_replace(' ','EL',$cadena1);
+	$compLike49 = str_replace(' ','LA',$cadena1);
+	$compLike50 = str_replace(' ','LOS',$cadena1);
+	$compLike51 = str_replace(' ','LAS',$cadena1);
+	$compLike52 = str_replace(' ','EN',$cadena1);
+	$compLike53 = str_replace(' ','UN',$cadena1);
+	$compLike54 = str_replace(' ','DE',$cadena1);
+	$compLike55 = str_replace(' ','DEL',$cadena1);
+	$compLike56 = str_replace(' ','Y',$cadena1);
+	$compLike57 = str_replace(' ','DE EL',$cadena1);
+	$compLike58 = str_replace(' ','DE LA',$cadena1);
+	$compLike59 = str_replace(' ','DE LOS',$cadena1);
+	$compLike60 = str_replace(' ','DE LAS',$cadena1);
+	$compLike61 = str_replace(' ',' ',$cadena1);
+	$union12 = '>'.$cadena1.'+('.$compLike48.' '.$compLike49.' '.$compLike50.' '.$compLike51.' '.$compLike52.' '.$compLike53.
+				' '.$compLike54.' '.$compLike55.' '.$compLike56.' '.$compLike57.' '.$compLike58.' '.$compLike59.' '.$compLike60.' '.$compLike61.')';
+
 	
+	//$cadena = expl
+		/*$compLike12 = preg_replace('/ /','*',$cadena1);
+		$compLike12 = quitarDoblePorCiento($compLike12);
+		*/
 		//BUSCAMOS EN LA BBDD CON LIKE Y CON REGEXP
 		 $inicio = time();
-    	 $matches2 = calles_correos_busqueda_coincidencias($cadc,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,
-    	 				$compLike5,$compLike6,$compLike7,$compLike8,$compLike9,$compLike10,$compLike11,$compLike12,$provincia,$arrayId);
+
+		 $arr = explode(' ',$cadc);
+		// obliga que estén las dos palabras
+		 $prueba = '+>'.implode($arr,' +>');
+		 
+		 //$cadc
+    	 $matches2 = calles_correos_busqueda_coincidencias($prueba,$compLike,$union1,$union2,$union3,$union4,
+    	 				$union5,$union6,$union7,$union8,$union9,$union10,$union11,$union12,$provincia,$arrayId);
 		 //$matches2 = calles_correos_busqueda_coincidencias($cadena,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,
     	 	//			$compLike5,$compLike6,$compLike7,$compLike8,$compLike9,$compLike10,$compLike11,$compLike12,$provincia,$arrayId); //$matches = calles_correos_busqueda_coincidencias($cadena,$compLike,$provincia);
           //ORDENAMOS EL ARRAY CON LAS COMPARACIONES ENCONTRADAS.
@@ -171,10 +270,10 @@ function calles_correos_autocomplete($string = '', $provincia){
 	 }else {
        $matches = $matches1;
      	}
-	 } //endif no tiene espacios en blanco. 
+	/* } //endif no tiene espacios en blanco. 
  	 else {
          $matches = $matches1;
-     }
+     }*/
 	 $copiaordenacion = array();
 	 $ordenacion = $matches;
    	 $distancia = -1;
@@ -231,7 +330,7 @@ function calles_correos_autocomplete($string = '', $provincia){
    			}
     // Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
- 	$array_devolver = array();
+ 	/*$array_devolver = array();
    	foreach ($copiaordenacion as $match){
    		
    		$array_devolver[$match['idregistro']] =  		
@@ -247,9 +346,9 @@ function calles_correos_autocomplete($string = '', $provincia){
 		  				
 	}
 	
-    drupal_json($array_devolver); 
+    drupal_json($array_devolver); */
 		
-  // return $copiaordenacion;
+   return $copiaordenacion;
   
 }
 function calles_correos_busqueda_coincidencias($cadc,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,$compLike5,$compLike6,$compLike7,$compLike8,$compLike9,
@@ -291,7 +390,7 @@ function calles_correos_busqueda_coincidencias($cadc,$compLike,$compLike1,$compL
   				        OR MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)
   				        OR MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE))";
   				//$cad tiene algo de la forma +isabel +la +catolica
-  				$result = db_query_range($sql,array($cad,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,
+  				$result = db_query_range($sql,array($cadc,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,
   						  $compLike5,$compLike6,$compLike7,$compLike8,$compLike9,$compLike10,$compLike11,
   						  $compLike12),0,40);
 			}
@@ -318,7 +417,7 @@ function calles_correos_busqueda_coincidencias($cadc,$compLike,$compLike1,$compL
   				        OR MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)
   				        OR MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE))";
   				//$cad tiene algo de la forma +isabel +la +catolica
-  				$result = db_query_range($sql,array($cad,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,
+  				$result = db_query_range($sql,array($cadc,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,
   						  $compLike5,$compLike6,$compLike7,$compLike8,$compLike9,$compLike10,$compLike11,
   						  $compLike12),0,40);
 			}
@@ -445,11 +544,14 @@ function busquedaExacta($cad){
   			$result = db_query_range($sql,array($cad2,$cad3),0,60);*/
 	//select * from POSTALT where viapobla like 'gran via%'
 	$cad2 = $cad.'%';
+	$cad3 = '"'.$cad.'"';
 	$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,
   			    num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}
   	     		 LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad
   				 LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia WHERE 
-		     viapobla like '%s' ORDER BY viapobla ASC";
+		     viapobla like '%s' 
+		     
+		     ORDER BY viapobla ASC";
 		$result  = db_query_range($sql,$cad2,0,60);
      while ($calleCorreos = db_fetch_object($result)) {
     			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
