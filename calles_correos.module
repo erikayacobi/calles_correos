@@ -413,19 +413,19 @@ function calles_correos_autocomplete($string = '', $provincia){
 				$tiempoConstruirCadena2 = microtime(true);
 				
 			}//endif $numeroCombinaciones<$totalCombinacionesPalabra
-				if(strlen($palabra)>=2){
+				//if(strlen($palabra)>=2){
 					if($ultimaPalabra===true){
 						$cadenaBusqueda = $cadenaBusqueda."*)";
 					}
 					else{ 
 						$cadenaBusqueda = $cadenaBusqueda. ") ";
 					}
-				}
+				/*}
 				else { //longitud <=2 y ultima palabra
 					if($ultimaPalabra === true){
 						$cadenaBusqueda =$cadenaBusqueda."*) ";
 					}
-				}
+				}*/
 					//vacío el array_combinaciones para guardar solo las combinaciones de lo que necesito de la siguiente palabra-.
 				unset($array_combinaciones);
 				unset($array_cambios);
@@ -506,7 +506,7 @@ function calles_correos_autocomplete($string = '', $provincia){
     $tiempoConstruirCadena3 = $tiempoConstruirCadena2 - $tiempoConstruirCadena;
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-  /*  $array_devolver = array();
+   /* $array_devolver = array();
    	foreach ($copiaordenacion as $match){
    		
    		$array_devolver[$match['idregistro']] =  		
