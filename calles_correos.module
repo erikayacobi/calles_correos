@@ -133,13 +133,15 @@ function calles_correos_autocomplete($string = '', $provincia){
 		 
 		 //array de palabras <3 para excluir de la busqueda. Como voy a tratar las palabras de forma individual,
 		 //quito las combinaciones de el, de la, de los, de las, porque será formada por esas individualmente
-		 $opcionales = array('EL','LA','LOS','LAS','EN','UN','DE','DEL','Y'); //,'Y','DE EL','DE LA','DE LOS','DE LAS'
+		// $opcionales = array('EL','LA','LOS','LAS','EN','UN','DE','DEL','Y'); //,'Y','DE EL','DE LA','DE LOS','DE LAS'
 		
+		 //Guardo en un array ,la calle introducida por teclado. Teniendo en cada posicion del array, una palabra.
+		 //Teniendo en cuenta que se separa por el espacio en blanco.
 		 $array_separar = explode(" ", $cadena1);
-		 $k = 0; //indice del array donde guardaré las palabras 
+		 //$k = 0; //indice del array donde guardaré las palabras 
 		 //primero recorro el array por palabras
-		 $comb = 0;
-		 $numero = 0;
+		// $comb = 0;
+		// $numero = 0;
 		
 		 $longArraySeparar = sizeof($array_separar);
 		 for($i = 0; $i<$longArraySeparar;$i++){
@@ -170,7 +172,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 		 	}
 		 	
 	 		//ahora compruebo si hay letras del array de sustituciones en cada palabra del array inicial
-	 		$cont = 0;		
+	 		//$cont = 0;		
 		 	foreach($array_sustituciones as $key => $value){
 		 		$pos = strpos($palabra,$key);//$array_sustituciones[$key]);
 		 		if($pos!==FALSE)
@@ -258,7 +260,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   			$j = 0;
 				   			$total = $numeroIguales[$key][0]; //añado  			
 				   			for($totalpos = 0;$totalpos<$total;$totalpos++){//añado
-				   				$sustituciones[$j] =$array_posiciones[$array_combinaciones[$key]][$array2[$j2]]; 
+				   				$sustituciones[$j] =$array_posiciones[$value][$array2[$j2]];  //[$array_combinaciones[$key]][$array2[$j2]
 				   				$j++;
 				   				$j2++;
 				   			}
@@ -275,8 +277,8 @@ function calles_correos_autocomplete($string = '', $provincia){
 				  					   	
 				   	foreach($numeroIguales as $clave => $valor){
 				   		$posicion = 0;
-						$arrayPosiPalabra = $numeroIguales[$clave][2]; //array donde están las posiciones donde aparece la clave en $palabra
-						foreach($arrayPosiPalabra as $claveArrayPosiPalabra => $valueArrayPosiPalabra){
+				   		//$arrayPosiPalabra = $valor[2]; //array donde están las posiciones donde aparece la clave en $palabra //$numeroIguales[$clave] -> $valor
+						foreach($valor[2] as $claveArrayPosiPalabra => $valueArrayPosiPalabra){
 							 $caracter= $reemplazo[$clave][$posicion]; //caracter a sustituir
 							 $longitud = mb_strlen($caracter);
 							 $longitudClave = mb_strlen($clave);
@@ -476,7 +478,7 @@ function calles_correos_autocomplete($string = '', $provincia){
     $memoria = memory_get_usage();
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-    /*$array_devolver = array();
+  /*  $array_devolver = array();
    	foreach ($copiaordenacion as $match){
    		
    		$array_devolver[$match['idregistro']] =  		
@@ -539,7 +541,7 @@ function calculoPosiciones($numeroIguales,$palabra,$array_sustituciones){
 			if($posOcupadas[$posAparicion]!=1){
 			//esto era lo viejo
 		  	 	$posiciones[$posi] = $posAparicion;
-		 		 $posi++;
+		 		$posi++;
 			} //siguiente posicion a la que hemos encontrado
 			 $posInicial = $posAparicion+1;
 	
@@ -771,8 +773,6 @@ function quitarDobleEspacioBlanco($cadena){
 }
 //ordenacion distancia de lev 
 function ordenar_distancia_lev($cad,$distancia,$key,&$copiaordenacion){
-		
-	
 	$copia = array();
    	foreach($copiaordenacion as $key2 =>$value2){
    	
