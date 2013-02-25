@@ -424,7 +424,11 @@ function calles_correos_autocomplete($string = '', $provincia){
     	 }
     	 else if(sizeof($matches2)<1) 
     	 	$matches = $matches1;
-	 	}else {
+	 	}
+	 	//si busquedaExacta ya devuelve el maximo de registros permitidos ;
+	 	//Entonces $matches contendrá el array $matches1 que es el que devolvió la búsqueda Exacta realizada la primera vez, sobre 
+	 	//la palabra introducida.
+	 	else {
      		$matches = $matches1;
      	}
      	
@@ -433,12 +437,10 @@ function calles_correos_autocomplete($string = '', $provincia){
 	 $copiaordenacion = array();
 	 $ordenacion = $matches;
    	 $distancia = -1;
- 
+ 	//for donde ordeno por la distancia de levenshtein
    	 foreach($ordenacion as $key=>$value){
-   		
    		$copiaordenacion[$key] =$ordenacion[$key];
-  		ordenar_distancia_lev($cad,levenshtein($cad,$ordenacion[$key]['viapobla']),$key,$copiaordenacion);
-  	
+  		ordenar_distancia_lev($cad,levenshtein($cad,$ordenacion[$key]['viapobla']),$key,$copiaordenacion); //copiaordenacion va por referencia &$copiaordenacion.
    	}
 	$finalOrdenacionLev = microtime(true);
    	//ordenar por impar-inferior : vias con mismo nombre de calle, ciudad, provincia.
@@ -447,15 +449,18 @@ function calles_correos_autocomplete($string = '', $provincia){
    	foreach($copiaordenacion as $k=>$v){
    		foreach($copiaordenacion as $k2=>$v2){
     				//tienen la misma via y la misma ciudad. Ordenamos por impar inferior de menos a mas
-   				if(($v['viapobla'] === $v2['viapobla'])&&($v['ciudad'] === $v2['ciudad'])){
-   						if($v['nimparinf']<$v2['nimparinf']){
+    		//if($v['idregistro']!== $v2['idregistro']){
+   				if(($v['viapobla'] === $v2['viapobla'])){
+   					if($v['ciudad'] === $v2['ciudad']){
+   						if($v['nimparinf']<=$v2['nimparinf']){
 								$copia[$k2]=$copiaordenacion[$k2];
 								$copiaordenacion[$k2] = $copiaordenacion[$k];
 								$copiaordenacion[$k] = $copia[$k2];
 						}//endif ordenar por impar
-						//}//endif ordenar por ciudad
-					}//endif viapobla
-   			}//end for each
+					}//endif ordenar por ciudad
+				}//endif viapobla
+    		//}//en if idregistro
+   		}//end for each
    	}//end foreach
     $finalOrdenacion = microtime(true);	
    	$finalOrdenacionImpar = microtime(true);		
@@ -478,7 +483,7 @@ function calles_correos_autocomplete($string = '', $provincia){
     $memoria = memory_get_usage();
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-  /*  $array_devolver = array();
+   /* $array_devolver = array();
    	foreach ($copiaordenacion as $match){
    		
    		$array_devolver[$match['idregistro']] =  		
@@ -511,7 +516,7 @@ function calculoNumeroVeces($palabra,$array_combinaciones,$array_sustituciones,$
 				 * */
 				$numeroIguales[$clave] = array(substr_count($palabra,$clave),$array_sustituciones[$clave]); 
 				//$numero iguales contendrá por cada clave el numero de veces que aparece repetido.
-				$numero = 0;
+				//$numero = 0;
 					
 			}
 	return $numeroIguales;
@@ -545,9 +550,9 @@ function calculoPosiciones($numeroIguales,$palabra,$array_sustituciones){
 			} //siguiente posicion a la que hemos encontrado
 			 $posInicial = $posAparicion+1;
 	
-		}
+		} //end while
 		if(count($posiciones)>0){ //existe en al menos una posicion de la palabra
-			$numeroIguales[$clave][0] = count($posiciones);
+			$numeroIguales[$clave][0] = count($posiciones); //actualizo con el numero real de veces que aparece
 			$numeroIguales[$clave][2] = $posiciones;
 		}
 		else //sino,no me interesa. Elimino esa clave, para que no cree combinaciones innecesarias
@@ -670,17 +675,16 @@ function calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$array
 				else{
 					$calle = $calleCorreos->descvia;
 				}
-		  		$matches[$calleCorreos->idregistro] = 		array("tipovia" => $calle, 
-		  		 				  "viapobla" => $calleCorreos->viapobla,
-		  		 				  "idregistro" => $calleCorreos->idregistro,
-		  		 			      "codigo_postal" => $calleCorreos->codigo_postal,
-		  		 				  "ciudad" => $calleCorreos->descripcion,
-		  						  "nimparinf" => $calleCorreos->num_impar_inferior,
-		  						  "nimparsup" => $calleCorreos->num_impar_superior,
-		  						  "nparinf" => $calleCorreos->num_par_inferior,
-		  						  "nparsup" => $calleCorreos-> num_par_superior);  		
-		      		}
-
+		  		$matches[$calleCorreos->idregistro] = array("tipovia" => $calle, 
+		  		 				                      "viapobla" => $calleCorreos->viapobla,
+		  		 				                      "idregistro" => $calleCorreos->idregistro,
+		  		 			                          "codigo_postal" => $calleCorreos->codigo_postal,
+		  		 				                      "ciudad" => $calleCorreos->descripcion,
+		  						                      "nimparinf" => $calleCorreos->num_impar_inferior,
+		  						                      "nimparsup" => $calleCorreos->num_impar_superior,
+		  						                      "nparinf" => $calleCorreos->num_par_inferior,
+		  						                      "nparsup" => $calleCorreos-> num_par_superior);  		
+		    } //end while
 
 	return $matches;
 	
@@ -826,7 +830,6 @@ function calles_correos_art_prep($string,&$cadena2){
 function calles_correos_busqueda_coincidencias_antigua($string,$compLike,$compLike1,$compLike2,$compLike3,$compLike4,
 											$compLike5,$compLike6,$compLike7,$compLike8,$compLike9,$compLike10,
 											$compLike11,$compLike12,$provincia,$arrayId){
-	$inicio =time();
 	$matches = array();
 	//$arrayId => array donde guardamos los Id's de la primera busqueda realizada.
 	//$cadena una cadena de la forma (idregistro,idregistro,....) para en la segunda búsqueda no tener duplicados
@@ -946,8 +949,6 @@ function calles_correos_busqueda_coincidencias_antigua($string,$compLike,$compLi
 		      		}
     		
   	}
-  	$final =time();
-  	$total = $final - $inicio;
 	return $matches;
 }
 //COMPROBAR QUE TENGAMOS UNA H O NINGUNA EN CUALQUIER POSICION DE LA PALABRA. 
