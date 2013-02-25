@@ -80,9 +80,9 @@ function calles_correos_autocomplete($string = '', $provincia){
     
      //quito dobles espacios en blanco
      $cadc = $cad;
-     $cad = quitarDobleEspacioBlanco($cadc);
+     $cad = quitarDobleEspacioBlanco($cadc); //cadc
       //todo a mayusculas y sin tildes.
-     $matches1 = busquedaExacta($cadc);//$matches1=busquedaExacta($cad.'%');
+     $matches1 = busquedaExacta($cad);//cadc//$matches1=busquedaExacta($cad.'%');
      //guardo en $arrayId todos los Id's que hemos encontrado en la primera búsqueda.
      //teniendo en cuenta que $matches1, es un array cuyos índices son las claves
      $arrayId = array_keys($matches1);
@@ -97,21 +97,9 @@ function calles_correos_autocomplete($string = '', $provincia){
 	 //si solo es una palabra, lo que no haya encontrado en la primera búsqueda no lo va a encontrar en la segunda
 
      if($longitud<$totalLongitudMostrar){
-     	 $copia=$cad;
-     
- 		/*$array= explode(' ',$copia);
-	    $copia= '+'.implode($array,' +').'*';
-     	 $compLike = $copia;*/
-     	 //cadena regexp
-	 	/* $cadena1 = calles_correos_errores_mnb($cad,$copia);
-	 	 $cadena2 = calles_correos_errores($cadena1,$copia); //$copia //$compLike1
-	     $cadena3 = calles_correos_faltas_h($cadena2,$copia); //$copia //$compLike2
-		 $cadena4 = calles_correos_art_prep($cadena3,$copia); //$copia //$compLike3
-   
-	 	 $cadena = "(" .$cad . "|" . $cadena1. "|" . $cadena2. "|" . $cadena3 . "|" . $cadena4 . ")";  */
-		 //$cadCompLike = construirCadComparacionLike($string);
+     	
 		 //CONSTRUCCION CADENA LIKE
-		 $cadena1 = $string;
+		 $cadena1 = $cad; //$string
 		 $array_posiciones = array();
 		 $array_posiciones[0] = array('NB','MB','NV','MV');
 		 $array_posiciones[1] = array ('NP','MP');
@@ -288,127 +276,108 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   	foreach($numeroIguales as $clave => $valor){
 				   		$posicion = 0;
 						$arrayPosiPalabra = $numeroIguales[$clave][2]; //array donde están las posiciones donde aparece la clave en $palabra
-						//$longArrayPosiPalabra = sizeof($arrayPosiPalabra);
-						//for($pospalabra = 0;$pospalabra<$longArrayPosiPalabra;$pospalabra++){
-							foreach($arrayPosiPalabra as $claveArrayPosiPalabra => $valueArrayPosiPalabra){
+						foreach($arrayPosiPalabra as $claveArrayPosiPalabra => $valueArrayPosiPalabra){
 							 $caracter= $reemplazo[$clave][$posicion]; //caracter a sustituir
 							 $longitud = mb_strlen($caracter);
 							 
 				   				//ver si sustituyo dos letras por dos letras, o una letra por dos letras.
 				   				//si es una letra por dos letras, tenemos un problema
-				   				if(mb_strlen($clave)==1 && mb_strlen($caracter)==2){
+				   				if(mb_strlen($clave)===1 && mb_strlen($caracter)===2){
 				   					if($aumenta===TRUE && $valueArrayPosiPalabra>$cambio){
-			   				
-				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$valueArrayPosiPalabra+$cuantosAumenta,1);
-				   							//longitud palabra aumenta en uno.
-				   							$aumenta = true;
-				   							$cuantosAumenta++;
-				   							$cambio=$valueArrayPosiPalabra;
+			   							$start = $valueArrayPosiPalabra+$cuantosAumenta;
 				   					}
-				   					else{
-				   							if($disminuye === TRUE){
-												$posCambio3 = $valueArrayPosiPalabra-$cuantosDisminuye;				   							
-				   							}
-				   							else 
-				   								$posCambio3 = $valueArrayPosiPalabra;
-				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$posCambio3,1);
-				   							//longitud palabra aumenta en uno.
-				   							$aumenta = true;
-				   							$cuantosAumenta++;
-				   							$cambio=$valueArrayPosiPalabra;
-				   					}
-
+				   					//ha disminuirdo la palabra en alguna palabra
+				   					else if($disminuye === TRUE) //$valueArrayPosiPalabra>$cambio
+				   						$start = $valueArrayPosiPalabra-$cuantosDisminuye;	
+				   					else //la posicion a cambiar es inferior a la posicion donde se ha aumentado o disminuido.
+				   						$start = $valueArrayPosiPalabra;	
+				   						
+				   					$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,1);
+				   					//longitud palabra aumenta en uno
+				   					$aumenta = true;
+				   					$cuantosAumenta++;
+				   					$cambio=$valueArrayPosiPalabra;
+				   			
 				   				} 
-				   				else if(mb_strlen($clave)==2 && mb_strlen($caracter)==1){
-				   					if($disminuye ===TRUE && $valueArrayPosiPalabra>$cambioDisminuye){
-										 $long = $valueArrayPosiPalabra-$cuantosDisminuye;
-				   					
-										 if($valueArrayPosiPalabra>$cambioDisminuye)
-										    $posCambio = $long;
-										 else
-				   						 	$posCambio = $valueArrayPosiPalabra;
-				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$posCambio,2);			   						
-				   					}
-									else {
-	  									 if($aumenta === TRUE && $valueArrayPosiPalabra>$posCambio)
-											$posCambio4 = $valueArrayPosiPalabra+$cuantosAumenta;				   							
-				   						 else 
-				   							$posCambio4 = $valueArrayPosiPalabra;
-											
-											$cadenaSustitucion  = mb_substr_replace($cadenaSustitucion,$caracter,$posCambio4,2);
-											//problema inverso..
-											//al sustituir dos caracteres por uno, la cadena disminuye en longitud.
-											$cuantosDisminuye = $cuantosDisminuye+1;	
-											$disminuye = true;		   				
-				   							$cambioDisminuye = $valueArrayPosiPalabra;
-									}
+				   				else if(mb_strlen($clave)===2 && mb_strlen($caracter)===1){
+				   					if($disminuye ===TRUE && $valueArrayPosiPalabra>$cambioDisminuye)
+										 //if($valueArrayPosiPalabra>$cambioDisminuye)
+									   $start = $valueArrayPosiPalabra-$cuantosDisminuye; //$long
+									else if($aumenta === TRUE && $valueArrayPosiPalabra>$posCambio)
+										$start = $valueArrayPosiPalabra+$cuantosAumenta;	
 
+									else 
+										$start = $valueArrayPosiPalabra;
+				   					
+									$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,2);	
+
+				   					//problema inverso..
+									//al sustituir dos caracteres por uno, la cadena disminuye en longitud.
+									$cuantosDisminuye = $cuantosDisminuye+1;	
+									$disminuye = true;		   				
+				   					$cambioDisminuye = $valueArrayPosiPalabra;
 				   				}
 				   				else{
 				   					//similar si la clave y el valor a cambiar son ambas de longitud dos o dde longitud uno.
 				   					if($aumenta === TRUE && $disminuye === FALSE){
-				   						if($valueArrayPosiPalabra>$cambio){
-				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$valueArrayPosiPalabra+$cuantosAumenta,$longitud);
-				   						
-				   						}
+				   						if($valueArrayPosiPalabra>$cambio)
+				   							$start = $valueArrayPosiPalabra+$cuantosAumenta;
+				   						else $start = $valueArrayPosiPalabra;
+				   							
+				   						$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,$longitud);
+				   						/*}
 				   						else{
 				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$valueArrayPosiPalabra,$longitud);
-				   						}
-				   					
+				   						}*/
 				   					}
 				   					else if ($disminuye === TRUE && $aumenta === FALSE){
-				   						 $long = $valueArrayPosiPalabra-$cuantosDisminuye;
 				   						 if($valueArrayPosiPalabra>$cambioDisminuye)
-				   						 	$posCambio2 = $long;
+				   						 	$start = $valueArrayPosiPalabra-$cuantosDisminuye;
 				   						 else 
-				   						 	$posCambio2 = $valueArrayPosiPalabra;
-				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$posCambio2,$longitud);
+				   						 	$start = $valueArrayPosiPalabra;
+				   						
+				   						 $cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$start,$longitud);
 				   					}
 				   					else if($aumenta === TRUE && $disminuye === TRUE){
 				   						$long = $valueArrayPosiPalabra+$cuantosAumenta;
 				   						if($long>0)
 				   							$long = $long-$cuantosDisminuye;
-				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter, $long,$longitud);
+				   						
+				   						$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter, $long,$longitud);
 				   					}
 				   					else if($aumenta === FALSE && $disminuye === FALSE){
 				   						//verificio la longitud de la clave, ya que serán o de longitud dos o 1, y así dependiendo, pues marco
 				   						//los caracteres que no pueden ser usados.
-				   						if(mb_strlen($caracter) === 1){
+				   						//if(mb_strlen($caracter) === 1){
 				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$valueArrayPosiPalabra,$longitud);
-				   						}
+				   						//}
 				   						//no podrán ser modificadas ni ese caracter, ni el siguiente
-				   						else if(mb_strlen($caracter) === 2){
-				   						   		$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$valueArrayPosiPalabra,$longitud);
-			   							}
+				   						//else if(mb_strlen($caracter) === 2){
+				   						   	//	$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$valueArrayPosiPalabra,$longitud);
+			   							//}
 			   					}
 				   				}
 				   			$posicion++;
-						
 						}
-						
 				   	}
-  
 					//cuando termino todos los cambios sobre la palabra, la voy guardando en mi array de cambios.
 				   	//para evitar que haya duplicados
 				   	if(strcmp($palabra,$cadenaSustitucion)!=0){//sensible a mayusculas y minusculas, pero como está en mayusculas, no problema.
 				   		//verifico que la combinacion que venga, no esté ya en el array de cambios.
 				   			$array_cambios[$comb] = $cadenaSustitucion;
 				   	  		$comb++;
-
 				   	}
-				 
 					//ya hemos guardado esa palabra, ahora ya las posiciones ocupadas de la anterior palabra no nos interesan
 					unset($posicionesOcupadas);
-				 
 				}	
 				//$array_cambios_sin_dupl= array_values(array_unique($array_cambios));	
 				$tiempoConstruirCadena = microtime(true);
 			
 			    foreach($array_cambios as $keyCambios => $valorCambios){
 					if($ultimaPalabra===true)
-						$cadenaBusqueda = $cadenaBusqueda."* ".$valorCambios;//$array_cambios[$j];
+						$cadenaBusqueda = $cadenaBusqueda."* ".$valorCambios;
 					else
-						$cadenaBusqueda = $cadenaBusqueda." ".$valorCambios; //$array_cambios[$j];//antes era $cadenaBusqueda.'*'." ".$array_cambios[$j];
+						$cadenaBusqueda = $cadenaBusqueda." ".$valorCambios;
 				}
 				$tiempoConstruirCadena2 = microtime(true);
 				
@@ -477,7 +446,7 @@ function calles_correos_autocomplete($string = '', $provincia){
    	foreach($copiaordenacion as $k=>$v){
    		foreach($copiaordenacion as $k2=>$v2){
     				//tienen la misma via y la misma ciudad. Ordenamos por impar inferior de menos a mas
-   				if(($v['viapobla'] == $v2['viapobla'])&&($v['ciudad'] == $v2['ciudad'])){
+   				if(($v['viapobla'] === $v2['viapobla'])&&($v['ciudad'] === $v2['ciudad'])){
    						if($v['nimparinf']<$v2['nimparinf']){
 								$copia[$k2]=$copiaordenacion[$k2];
 								$copiaordenacion[$k2] = $copiaordenacion[$k];
@@ -504,6 +473,8 @@ function calles_correos_autocomplete($string = '', $provincia){
     $tiempoTodasCombinaciones3 = $tiempoTodasCombinaciones2-$tiempoTodasCombinaciones;
     //tiempo que tarda en coger los datos de $array_cambios
     $tiempoConstruirCadena3 = $tiempoConstruirCadena2 - $tiempoConstruirCadena;
+    
+    $memoria = memory_get_usage();
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
     $array_devolver = array();
@@ -559,8 +530,8 @@ function calculoPosiciones($numeroIguales,$palabra,$array_sustituciones){
 			//este if es para las claves, que pueden formar parte de otra clave, para que no cuente las posiciones dos veces, y por tanto, 
 			//no cree combinaciones innecesarias. 
 			
-			if(strcmp($clave,'RR') == 0 || strcmp($clave,'NB') == 0 || strcmp($clave,'MB') == 0 || strcmp($clave,'NV') == 0 || strcmp($clave, 'MV') == 0
-				|| strcmp($clave,'TX') == 0 || strcmp($clave,'CH') == 0){
+			if(strcmp($clave,'RR') === 0 || strcmp($clave,'NB') === 0 || strcmp($clave,'MB') === 0 || strcmp($clave,'NV') === 0 || strcmp($clave, 'MV') === 0
+				|| strcmp($clave,'TX') === 0 || strcmp($clave,'CH') === 0){
 				$posiciones[$posi] = $posAparicion;
 		 	 	$posi++;
 				$posOcupadas[$posAparicion] = 1;
@@ -568,16 +539,14 @@ function calculoPosiciones($numeroIguales,$palabra,$array_sustituciones){
 			}
 			if($posOcupadas[$posAparicion]!=1){
 			//esto era lo viejo
-		  	 $posiciones[$posi] = $posAparicion;
-		 	 $posi++;
-		
+		  	 	$posiciones[$posi] = $posAparicion;
+		 		 $posi++;
 			} //siguiente posicion a la que hemos encontrado
 			 $posInicial = $posAparicion+1;
 	
 		}
 		if(count($posiciones)>0){ //existe en al menos una posicion de la palabra
 			$numeroIguales[$clave][0] = count($posiciones);
-
 			$numeroIguales[$clave][2] = $posiciones;
 		}
 		else //sino,no me interesa. Elimino esa clave, para que no cree combinaciones innecesarias
