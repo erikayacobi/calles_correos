@@ -288,10 +288,9 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   	foreach($numeroIguales as $clave => $valor){
 				   		$posicion = 0;
 						$arrayPosiPalabra = $numeroIguales[$clave][2]; //array donde están las posiciones donde aparece la clave en $palabra
-						for($pospalabra = 0;$pospalabra<sizeof($arrayPosiPalabra);$pospalabra++){
-								
+						$longArrayPosiPalabra = sizeof($arrayPosiPalabra);
+						for($pospalabra = 0;$pospalabra<$longArrayPosiPalabra;$pospalabra++){
 							 $caracter= $reemplazo[$clave][$posicion]; //caracter a sustituir
-					
 							 $longitud = mb_strlen($caracter);
 							 
 				   				//ver si sustituyo dos letras por dos letras, o una letra por dos letras.
@@ -352,7 +351,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   						
 				   						}
 				   						else{
-				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,/* $posiPalabra*/$arrayPosiPalabra[$pospalabra],$longitud);
+				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$arrayPosiPalabra[$pospalabra],$longitud);
 				   						}
 				   					
 				   					}
@@ -506,7 +505,7 @@ function calles_correos_autocomplete($string = '', $provincia){
     $tiempoConstruirCadena3 = $tiempoConstruirCadena2 - $tiempoConstruirCadena;
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-   /* $array_devolver = array();
+  /*  $array_devolver = array();
    	foreach ($copiaordenacion as $match){
    		
    		$array_devolver[$match['idregistro']] =  		
