@@ -98,10 +98,10 @@ function calles_correos_autocomplete($string = '', $provincia){
 
      if($longitud<$totalLongitudMostrar){
      	 $copia=$cad;
-     	// $copia = '%' . $copia .'%'; 
- 		$array= explode(' ',$copia);
+     
+ 		/*$array= explode(' ',$copia);
 	    $copia= '+'.implode($array,' +').'*';
-     	 $compLike = $copia;
+     	 $compLike = $copia;*/
      	 //cadena regexp
 	 	/* $cadena1 = calles_correos_errores_mnb($cad,$copia);
 	 	 $cadena2 = calles_correos_errores($cadena1,$copia); //$copia //$compLike1
@@ -387,7 +387,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 						}
 						
 				   	}
-				  
+  
 					//cuando termino todos los cambios sobre la palabra, la voy guardando en mi array de cambios.
 				   	//para evitar que haya duplicados
 				   	if(strcmp($palabra,$cadenaSustitucion)!=0){//sensible a mayusculas y minusculas, pero como está en mayusculas, no problema.
@@ -506,7 +506,7 @@ function calles_correos_autocomplete($string = '', $provincia){
     $tiempoConstruirCadena3 = $tiempoConstruirCadena2 - $tiempoConstruirCadena;
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-   /* $array_devolver = array();
+  /*  $array_devolver = array();
    	foreach ($copiaordenacion as $match){
    		
    		$array_devolver[$match['idregistro']] =  		
@@ -522,7 +522,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 	}//end foreach
 	
     drupal_json($array_devolver);*/
-   return $copiaordenacion;
+  return $copiaordenacion;
   
 }
 
