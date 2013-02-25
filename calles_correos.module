@@ -279,18 +279,19 @@ function calles_correos_autocomplete($string = '', $provincia){
 						foreach($arrayPosiPalabra as $claveArrayPosiPalabra => $valueArrayPosiPalabra){
 							 $caracter= $reemplazo[$clave][$posicion]; //caracter a sustituir
 							 $longitud = mb_strlen($caracter);
-							 
+							 $longitudClave = mb_strlen($clave);
+							 $start = $valueArrayPosiPalabra;	
 				   				//ver si sustituyo dos letras por dos letras, o una letra por dos letras.
 				   				//si es una letra por dos letras, tenemos un problema
-				   				if(mb_strlen($clave)===1 && mb_strlen($caracter)===2){
+				   				if($longitudClave===1 && $longitud===2){
 				   					if($aumenta===TRUE && $valueArrayPosiPalabra>$cambio){
 			   							$start = $valueArrayPosiPalabra+$cuantosAumenta;
 				   					}
 				   					//ha disminuirdo la palabra en alguna palabra
 				   					else if($disminuye === TRUE) //$valueArrayPosiPalabra>$cambio
 				   						$start = $valueArrayPosiPalabra-$cuantosDisminuye;	
-				   					else //la posicion a cambiar es inferior a la posicion donde se ha aumentado o disminuido.
-				   						$start = $valueArrayPosiPalabra;	
+				   					//else //la posicion a cambiar es inferior a la posicion donde se ha aumentado o disminuido.
+				   						//$start = $valueArrayPosiPalabra;	
 				   						
 				   					$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,1);
 				   					//longitud palabra aumenta en uno
@@ -299,16 +300,14 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   					$cambio=$valueArrayPosiPalabra;
 				   			
 				   				} 
-				   				else if(mb_strlen($clave)===2 && mb_strlen($caracter)===1){
+				   				else if($longitudClave===2 && $longitud===1){
 				   					if($disminuye ===TRUE && $valueArrayPosiPalabra>$cambioDisminuye)
 										 //if($valueArrayPosiPalabra>$cambioDisminuye)
 									   $start = $valueArrayPosiPalabra-$cuantosDisminuye; //$long
 									else if($aumenta === TRUE && $valueArrayPosiPalabra>$posCambio)
 										$start = $valueArrayPosiPalabra+$cuantosAumenta;	
 
-									else 
-										$start = $valueArrayPosiPalabra;
-				   					
+								
 									$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,2);	
 
 				   					//problema inverso..
@@ -322,7 +321,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   					if($aumenta === TRUE && $disminuye === FALSE){
 				   						if($valueArrayPosiPalabra>$cambio)
 				   							$start = $valueArrayPosiPalabra+$cuantosAumenta;
-				   						else $start = $valueArrayPosiPalabra;
+				   						//else $start = $valueArrayPosiPalabra;
 				   							
 				   						$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,$longitud);
 				   						/*}
@@ -333,8 +332,8 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   					else if ($disminuye === TRUE && $aumenta === FALSE){
 				   						 if($valueArrayPosiPalabra>$cambioDisminuye)
 				   						 	$start = $valueArrayPosiPalabra-$cuantosDisminuye;
-				   						 else 
-				   						 	$start = $valueArrayPosiPalabra;
+				   						// else 
+				   						 	//$start = $valueArrayPosiPalabra;
 				   						
 				   						 $cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$start,$longitud);
 				   					}
@@ -477,7 +476,7 @@ function calles_correos_autocomplete($string = '', $provincia){
     $memoria = memory_get_usage();
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-   /* $array_devolver = array();
+    $array_devolver = array();
    	foreach ($copiaordenacion as $match){
    		
    		$array_devolver[$match['idregistro']] =  		
@@ -492,8 +491,8 @@ function calles_correos_autocomplete($string = '', $provincia){
 			
 	}//end foreach
 	
-    drupal_json($array_devolver);*/
-  return $copiaordenacion;
+    drupal_json($array_devolver);
+  //return $copiaordenacion;
   
 }
 
