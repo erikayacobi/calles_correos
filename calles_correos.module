@@ -57,7 +57,7 @@ function calles_correos_devolver_poblacion($codigo){
 		."SELECT descripcion FROM CODMUN WHERE CODMUN.cpro = POSTALT.cpro AND CODMUN.cmun = POSTALT.cmun) ) AS nombrePoblacion FROM POSTALT "
 		."WHERE POSTALT.idregistro = '%s'";		
 		$query = db_result(db_query($sql,$codigo));*/
-	$query = db_result(db_query("SELECT CODCIU.descripcion FROM POSTALT,CODCIU where POSTALT.codlocalidad = CODCIU.codlocalidad and POSTALT.idregistro = %s",$codigo));	
+	$query = db_result(db_query("SELECT CODCIU.descripcion FROM POSTALT,CODCIU where POSTALT.codlocalidad = CODCIU.codlocalidad and POSTALT.idregistro = %d",$codigo));	
 
 		
 	return $query;
@@ -79,8 +79,7 @@ function calles_correos_autocomplete($string = '', $provincia){
      //igual a lo intruducido. Si no, entonces hacemos las posibles búsquedas por los patrones. 
     
      //quito dobles espacios en blanco
-     $cadc = $cad;
-     $cad = quitarDobleEspacioBlanco($cadc); //cadc
+     $cad = quitarDobleEspacioBlanco($cad); //cadc
       //todo a mayusculas y sin tildes.
      $matches1 = busquedaExacta($cad);//cadc//$matches1=busquedaExacta($cad.'%');
      //guardo en $arrayId todos los Id's que hemos encontrado en la primera búsqueda.
@@ -101,27 +100,18 @@ function calles_correos_autocomplete($string = '', $provincia){
 		 //CONSTRUCCION CADENA LIKE
 		 $cadena1 = $cad; //$string
 		 $array_posiciones = array();
-		 $array_posiciones[0] = array('NB','MB','NV','MV');
-		 $array_posiciones[1] = array ('NP','MP');
-		 $array_posiciones[2] = array('TX','TZ','CH');
-		 $array_posiciones[3] = array('GU','G','X','J');
-		 $array_posiciones[4] = array('RR','R');
-		 $array_posiciones[5] = array('V','B');
-		 $array_posiciones[6] = array('LL','Y','I');
-		 $array_posiciones[7] = array('C','K','QU');
-		 $array_posiciones[8] = array('N','Ñ');
+		 $array_posiciones[] = array('NB','MB','NV','MV');
+		 $array_posiciones[] = array ('NP','MP');
+		 $array_posiciones[] = array('TX','TZ','CH');
+		 $array_posiciones[] = array('GU','G','X','J');
+		 $array_posiciones[] = array('RR','R');
+		 $array_posiciones[] = array('V','B');
+		 $array_posiciones[] = array('LL','Y','I');
+		 $array_posiciones[] = array('C','K','QU');
+		 $array_posiciones[] = array('N','Ñ');
  	 
-		 $array_sustituciones = array();
+		 $array_sustituciones = array(); //array donde tendremos por cada clave, la posicion donde se encuentra en $array_posiciones
 		
-			//antiguo
-		/* for($indice = 0;$indice<sizeof($array_posiciones);$indice++){
-		 	 $key = $array_posiciones[$indice];
-		 	 for($ind2 = 0;$ind2<sizeof($key);$ind2++){
-		 	        $k = $key[$ind2];
-					$array_sustituciones[$k] = $indice;	//creo arrays de la forma $array_sustituciones['NB']  = $array_posiciones[0]; etc;
-		 	 }		 
-		 }*/
-		 	
 		 $tiempo1 = microtime(true);
 		 foreach($array_posiciones as $key => $value){
 		 	foreach($value as $key2 => $value2){
@@ -133,50 +123,30 @@ function calles_correos_autocomplete($string = '', $provincia){
 		 
 		 //array de palabras <3 para excluir de la busqueda. Como voy a tratar las palabras de forma individual,
 		 //quito las combinaciones de el, de la, de los, de las, porque será formada por esas individualmente
-		// $opcionales = array('EL','LA','LOS','LAS','EN','UN','DE','DEL','Y'); //,'Y','DE EL','DE LA','DE LOS','DE LAS'
+		 $opcionales = array('EL','LA','LOS','LAS','EN','UN','DE','DEL','Y'); //,'Y','DE EL','DE LA','DE LOS','DE LAS'
 		
 		 //Guardo en un array ,la calle introducida por teclado. Teniendo en cada posicion del array, una palabra.
 		 //Teniendo en cuenta que se separa por el espacio en blanco.
 		 $array_separar = explode(" ", $cadena1);
-		 //$k = 0; //indice del array donde guardaré las palabras 
-		 //primero recorro el array por palabras
-		// $comb = 0;
-		// $numero = 0;
-		
+			
 		 $longArraySeparar = sizeof($array_separar);
+		 //recorro el array por palabras
 		 for($i = 0; $i<$longArraySeparar;$i++){
 		 	//por cada palabra introducida, ver si hay alguna letra a sustituir.
 		 	$palabra = $array_separar[$i];
 		 	$longPalabra = mb_strlen($palabra);
-		 	$aux = $i;
-		 	$timeWhile = microtime(true);
-		 	while($longPalabra<=3 && (($aux+1 !== $longArraySeparar))){
-		 		//ahora directamente me da igual que esté en el array de $opcionales o no..
-		 		//por lo tanto , si es una palabra inferior a tres caracteres y no es la ultima palabra, la omitimos y pasamos
-		 		$i++; 
-		 		$palabra = $array_separar[$i];
-		 		$longPalabra = mb_strlen($palabra);
+		
+		 	
+		if(($i+1 === $longArraySeparar)) $ultimaPalabra = true;
+		
+ 			//si es >2 y no es el final y no está en la lista de opcionales
+ 		if($longPalabra>2 && !esOpcional($palabra,$opcionales) || ($longPalabra<=3 && $ultimaPalabra===true)){
+ 			$cadenaBusqueda = $cadenaBusqueda.' +(>'.$palabra;
 
-		 	}//end while
- 			$timeWhile2 = microtime(true);
- 			$finalWhile = $timeWhile2-$timeWhile;
-		 	
-			//volvemos a obtener el indice,ya hemos salido del while;
-		 	$aux = $i;
-		 	if($longPalabra>2 && (($aux+1)!==$longArraySeparar)) //no estamos en la ultima palabra
-		 		$cadenaBusqueda = $cadenaBusqueda.' +(>'.$palabra;
-		 	
-		 	else if(($aux+1)===$longArraySeparar){
-		 		$cadenaBusqueda = $cadenaBusqueda.' +(>'.$palabra;
-		 		$ultimaPalabra = true;
-		 	}
-		 	
-	 		//ahora compruebo si hay letras del array de sustituciones en cada palabra del array inicial
-	 		//$cont = 0;		
-		 	foreach($array_sustituciones as $key => $value){
-		 		$pos = strpos($palabra,$key);//$array_sustituciones[$key]);
+ 			foreach($array_sustituciones as $key => $value){
+				$pos = strpos($palabra,$key);
 		 		if($pos!==FALSE)
-		 			$array_combinaciones[$key] =$array_sustituciones[$key];
+		 			$array_combinaciones[$key] = $value;
      	 	}//end foreach		 	
 		//$array_combinaciones a cambiar
 		if(sizeof($array_combinaciones)>0){
@@ -190,31 +160,12 @@ function calles_correos_autocomplete($string = '', $provincia){
 				 * $numeroIguales[key][2] = las posiciones donde aparece;
 				 * */
 			$tiempoNumVeces1 = microtime(true);
-			$numeroIguales = calculoNumeroVeces($palabra,$array_combinaciones,$array_sustituciones,$array_posiciones);
+			$numeroIguales = array();
+		    calculoNumeroVeces($palabra,$array_combinaciones,$array_sustituciones,$numeroIguales);
 			$tiempoNumVeces2 = microtime(true);
 			$tiempoNumVeces3 = $tiempoNumVeces2-$tiempoNumVeces1;
 			//antiguo
-		/*	$iniPosAnt = microtime(true);
-			foreach($numeroIguales as $clave => $valor){
-				$posi = 0;
-				for($recorrer = 0;$recorrer<$longPalabra;$recorrer++){
-					if(mb_strlen($clave)===2 && $recorrer+1<$longPalabra)
-						$iguales = strcmp($clave,$palabra[$recorrer].$palabra[$recorrer+1]); //**************!!!!!!!
-					else
-						$iguales = strcmp($clave,$palabra[$recorrer]);
-						
-					if($iguales==0){
-						$posiciones[$posi] = $recorrer; //guardo en la posicion 2, la posicion donde se encuentra esa letra. 
-						$posi++;
-					}
-				}
-				$numeroIguales[$clave][2] = $posiciones;
-				//una vez ya guardadas las posiciones, lo dejo vacío para la proxima palabra
-				unset($posiciones);
-			}
-			$finPosAnt = microtime(true);
-			$totalPosAnt = $finPosAnt-$iniPosAnt;*/
-			
+		
 			
 			//guardo las posiciones donde aparece cada letra.
 			//nuevo
@@ -224,20 +175,23 @@ function calles_correos_autocomplete($string = '', $provincia){
 				 * $numeroIguales[key][2] = las posiciones donde aparece;
 				 * */ 
 			$inicioPosiciones = microtime(true);
-			$numeroIguales = calculoPosiciones($numeroIguales,$palabra,$array_sustituciones);
+			/*$numeroIguales = */calculoPosiciones($numeroIguales,$palabra,$array_sustituciones); //paso por referencia $numeroIguales y $array_sustituciones
 			$finalPosiciones = microtime(true);
 			$totalPosiciones = $finalPosiciones-$inicioPosiciones;
 			//obtengo el numero de valores de cada posicion del array de combinaciones
 			$combinar = array();
-			$p = 0;
+			
 			$tiempoNumCombinaciones = microtime(true);
 			$numeroCombinaciones = 1;
 				//en combinar guardo las posibilidades que hay en cada
 				foreach($numeroIguales as $clave => $valor){
+					$cantidad = count($array_posiciones[$array_combinaciones[$clave]]);
+					$numeroCombinaciones *= pow($cantidad,$valor[0]);
+					$cantidad--;
+					
 					for($numeroVeces=0;$numeroVeces<$valor[0];$numeroVeces++){
-						$combinar[$p] = count($array_posiciones[$array_combinaciones[$clave]])-1; //$combinar[$p] = count($array_combinaciones[$key])-1
-						$p++;	
-						$numeroCombinaciones = count($array_posiciones[$array_combinaciones[$clave]]) * $numeroCombinaciones;
+						$combinar[] = $cantidad; 
+					
 					}
 				}
 				//calcula el numero de combinaciones total, por cada palabra.
@@ -292,10 +246,9 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   					//ha disminuirdo la palabra en alguna palabra
 				   					else if($disminuye === TRUE) //$valueArrayPosiPalabra>$cambio
 				   						$start = $valueArrayPosiPalabra-$cuantosDisminuye;	
-				   					//else //la posicion a cambiar es inferior a la posicion donde se ha aumentado o disminuido.
-				   						//$start = $valueArrayPosiPalabra;	
-				   						
-				   					$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,1);
+				   					
+				   					$longitud = 1;
+				   					//$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,1);
 				   					//longitud palabra aumenta en uno
 				   					$aumenta = true;
 				   					$cuantosAumenta++;
@@ -304,13 +257,11 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   				} 
 				   				else if($longitudClave===2 && $longitud===1){
 				   					if($disminuye ===TRUE && $valueArrayPosiPalabra>$cambioDisminuye)
-										 //if($valueArrayPosiPalabra>$cambioDisminuye)
 									   $start = $valueArrayPosiPalabra-$cuantosDisminuye; //$long
 									else if($aumenta === TRUE && $valueArrayPosiPalabra>$posCambio)
 										$start = $valueArrayPosiPalabra+$cuantosAumenta;	
-
-								
-									$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,2);	
+									$longitud = 2;
+									//$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,2);	
 
 				   					//problema inverso..
 									//al sustituir dos caracteres por uno, la cadena disminuye en longitud.
@@ -323,41 +274,29 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   					if($aumenta === TRUE && $disminuye === FALSE){
 				   						if($valueArrayPosiPalabra>$cambio)
 				   							$start = $valueArrayPosiPalabra+$cuantosAumenta;
-				   						//else $start = $valueArrayPosiPalabra;
-				   							
-				   						$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,$longitud);
-				   						/*}
-				   						else{
-				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$valueArrayPosiPalabra,$longitud);
-				   						}*/
+				   						
+				   						//$cadenaSustitucion = mb_substr_replace($cadenaSustitucion,$caracter,$start,$longitud);
+				   						
 				   					}
 				   					else if ($disminuye === TRUE && $aumenta === FALSE){
 				   						 if($valueArrayPosiPalabra>$cambioDisminuye)
 				   						 	$start = $valueArrayPosiPalabra-$cuantosDisminuye;
-				   						// else 
-				   						 	//$start = $valueArrayPosiPalabra;
-				   						
-				   						 $cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$start,$longitud);
+				   					
+				   						// $cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$start,$longitud);
 				   					}
 				   					else if($aumenta === TRUE && $disminuye === TRUE){
-				   						$long = $valueArrayPosiPalabra+$cuantosAumenta;
-				   						if($long>0)
-				   							$long = $long-$cuantosDisminuye;
+				   						$start = $valueArrayPosiPalabra+$cuantosAumenta;
+				   						if($start>0)
+				   							$start = $start-$cuantosDisminuye;
 				   						
-				   						$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter, $long,$longitud);
+				   						//$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter, $start,$longitud);
 				   					}
-				   					else if($aumenta === FALSE && $disminuye === FALSE){
-				   						//verificio la longitud de la clave, ya que serán o de longitud dos o 1, y así dependiendo, pues marco
-				   						//los caracteres que no pueden ser usados.
-				   						//if(mb_strlen($caracter) === 1){
-				   							$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$valueArrayPosiPalabra,$longitud);
-				   						//}
-				   						//no podrán ser modificadas ni ese caracter, ni el siguiente
-				   						//else if(mb_strlen($caracter) === 2){
-				   						   	//	$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$valueArrayPosiPalabra,$longitud);
-			   							//}
-			   					}
+				   					//else if($aumenta === FALSE && $disminuye === FALSE){
+			   							//$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter,$valueArrayPosiPalabra,$longitud);
+				   						
+			   						//}
 				   				}
+				   			$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter, $start,$longitud);
 				   			$posicion++;
 						}
 				   	}
@@ -383,19 +322,14 @@ function calles_correos_autocomplete($string = '', $provincia){
 				$tiempoConstruirCadena2 = microtime(true);
 				
 			}//endif $numeroCombinaciones<$totalCombinacionesPalabra
-			//if(strlen($palabra)>=2){
+		
 				if($ultimaPalabra===true){
 					$cadenaBusqueda = $cadenaBusqueda."*)";
 				}
 				else{ 
 					$cadenaBusqueda = $cadenaBusqueda. ") ";
 				}
-			/*}
-			else { //longitud <=2 y ultima palabra
-				if($ultimaPalabra === true){
-					$cadenaBusqueda =$cadenaBusqueda."*) ";
-				}
-			}*/
+			
 				//vacío el array_combinaciones para guardar solo las combinaciones de lo que necesito de la siguiente palabra-.
 				unset($array_combinaciones);
 				unset($array_cambios);
@@ -407,8 +341,9 @@ function calles_correos_autocomplete($string = '', $provincia){
 			if(strlen($palabra)>=2)
 				if($ultimaPalabra === true)
 					$cadenaBusqueda = $cadenaBusqueda. '*) ';
-		}
-		 }
+			}
+		 }//endif
+	}
 		 $tiempoTodasCombinaciones2 = microtime(true);
 		
 		//BUSCAMOS EN LA BBDD CON LIKE Y CON REGEXP
@@ -499,11 +434,11 @@ function calles_correos_autocomplete($string = '', $provincia){
 	}//end foreach
 	
     drupal_json($array_devolver);*/
-  return $copiaordenacion;
+ return $copiaordenacion;
   
 }
 
-function calculoNumeroVeces($palabra,$array_combinaciones,$array_sustituciones,$array_posiciones){
+function calculoNumeroVeces($palabra,&$array_combinaciones,&$array_sustituciones,&$numeroIguales){
 		foreach($array_combinaciones as $clave => $valor){
 			//Una vez que ya tengo mi $array_combinaciones con todas las claves posibles, 
 			// miro en el array_posiciones todas las posibles combinaciones para buscarlos en la palabra 
@@ -515,40 +450,35 @@ function calculoNumeroVeces($palabra,$array_combinaciones,$array_sustituciones,$
 				 * $numeroIguales[key][2] = las posiciones donde aparece;
 				 * */
 				$numeroIguales[$clave] = array(substr_count($palabra,$clave),$array_sustituciones[$clave]); 
-				//$numero iguales contendrá por cada clave el numero de veces que aparece repetido.
-				//$numero = 0;
-					
-			}
-	return $numeroIguales;
-
+				//$numero iguales contendrá por cada clave el numero de veces que aparece repetido.	
+		}//end foreach
 }
 
-function calculoPosiciones($numeroIguales,$palabra,$array_sustituciones){
+function calculoPosiciones(&$numeroIguales,$palabra,&$array_sustituciones){
 	$posOcupadas = array();//añado jueves a ultima hora
 	foreach($numeroIguales as $clave => $valor){ 
 		$posInicial = 0;
 		$posi = 0;
 		$posiciones = array();
+		$longitudClave = mb_strlen($clave);
 		
 		while(($posAparicion= mb_strpos($palabra,$clave,$posInicial))!== FALSE){
 			//caso que sea RR
-			//añado jueves a ultima hora.
 			//este if es para las claves, que pueden formar parte de otra clave, para que no cuente las posiciones dos veces, y por tanto, 
 			//no cree combinaciones innecesarias. 
 			
-			if(strcmp($clave,'RR') === 0 || strcmp($clave,'NB') === 0 || strcmp($clave,'MB') === 0 || strcmp($clave,'NV') === 0 || strcmp($clave, 'MV') === 0
-				|| strcmp($clave,'TX') === 0 || strcmp($clave,'CH') === 0){
-				$posiciones[$posi] = $posAparicion;
+			//compruebo que no este ocupada esa posicion 
+			if( $posOcupadas[$posAparicion]!==1){
+				//si no está ocupada, según la longitud de la clave, ocupo una o dos posiciones.
+				$posOcupadas[$posAparicion] = 1; //caso de longitud clave uno
+				if($longitudClave===2){
+					$posOcupadas[$posAparicion+1] = 1; //caso de longitud clave 2;
+				}
+				$posiciones[$posi] = $posAparicion; //guardo la posicion donde aparece la clave.
 		 	 	$posi++;
-				$posOcupadas[$posAparicion] = 1;
-				$posOcupadas[$posAparicion+1] = 1;
+				
 			}
-			if($posOcupadas[$posAparicion]!=1){
-			//esto era lo viejo
-		  	 	$posiciones[$posi] = $posAparicion;
-		 		$posi++;
-			} //siguiente posicion a la que hemos encontrado
-			 $posInicial = $posAparicion+1;
+			$posInicial = $posAparicion+$longitudClave;//1;
 	
 		} //end while
 		if(count($posiciones)>0){ //existe en al menos una posicion de la palabra
@@ -558,7 +488,6 @@ function calculoPosiciones($numeroIguales,$palabra,$array_sustituciones){
 		else //sino,no me interesa. Elimino esa clave, para que no cree combinaciones innecesarias
 			unset($numeroIguales[$clave]);
 	}
-	return $numeroIguales;
 }
 
 
@@ -790,6 +719,17 @@ function ordenar_distancia_lev($cad,$distancia,$key,&$copiaordenacion){
    		}	
 	
    	}
+}
+
+function esOpcional($palabra,$opcionales){
+	
+	foreach($opcionales as $key => $value){
+		if(strcmp($value,$palabra)=== 0) //son iguales
+			return true;
+	}
+	//si no lo hemos encontrado
+	return false;
+
 }
 
 function calles_correos_errores($string,&$cadena2){
