@@ -131,9 +131,9 @@ function calles_correos_autocomplete($string = '', $provincia){
 		
  			//si es >2 y no es el final y no está en la lista de opcionales
  		    if($longPalabra>2 && !in_array($palabra,$opcionales) || ($longPalabra<=3 && $ultimaPalabra===true)){
- 				$cadenaBusqueda = $cadenaBusqueda.' +(>'.$palabra;
+ 				$cadenaBusqueda = $cadenaBusqueda.' +(>';
 				//guardo la primera palabra en el array
-				//$array_cambios[] = $palabra;
+				$array_cambios[] = $palabra;
  				
  				foreach($array_sustituciones as $key => $value){
 					$pos = strpos($palabra,$key);
@@ -231,7 +231,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 					//cuando termino todos los cambios sobre la palabra, la voy guardando en mi array de cambios.
 				   	//para evitar que haya duplicados
 				//sensible a mayusculas y minusculas, pero como está en mayusculas, no problema.
-				  //	if(!in_array($cadenaSustitucion,$array_cambios))
+					if(!in_array($cadenaSustitucion,$array_cambios))
 				   		//verifico que la combinacion que venga, no esté ya en el array de cambios.
 				   			$array_cambios[] = $cadenaSustitucion;
 					
@@ -257,7 +257,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 		else{
 			if(strlen($palabra)>=2)
 				if($ultimaPalabra === true)
-					$cadenaBusqueda = $cadenaBusqueda. '*) ';
+					$cadenaBusqueda = $cadenaBusqueda.$palabra. '*) ';
 			}
 		 }//endif
 	}
