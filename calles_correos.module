@@ -114,8 +114,8 @@ function calles_correos_autocomplete($string = '', $provincia){
 		 
 		 //array de palabras <3 para excluir de la busqueda. Como voy a tratar las palabras de forma individual,
 		 //quito las combinaciones de el, de la, de los, de las, porque será formada por esas individualmente
-		 $opcionales = array('EL','LA','LOS','LAS','EN','UN','DE','DEL','Y');
-		
+		 $opcionales = array('EL','LA','LOS','LAS','EN','UN','DE','DEL','Y','A','CON','POR','SIN','SO');
+				
 		 //Guardo en un array ,la calle introducida por teclado. Teniendo en cada posicion del array, una palabra.
 		 //Teniendo en cuenta que se separa por el espacio en blanco.
 		 $array_separar = explode(" ", $cadena1);
@@ -128,7 +128,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 		    if(($i+1 === $longArraySeparar)) $ultimaPalabra = true;
 			$numeroIguales = array();
  			//si es >2 y no es el final y no está en la lista de opcionales
- 		    if($longPalabra>2 && !in_array($palabra,$opcionales) || ($longPalabra<=3 && $ultimaPalabra)){
+ 		    if(!in_array($palabra,$opcionales) || $ultimaPalabra){
  				$cadenaBusqueda = $cadenaBusqueda.' +(>';
 				//guardo la primera palabra en el array
 				$array_cambios[] = $palabra;
@@ -142,22 +142,12 @@ function calles_correos_autocomplete($string = '', $provincia){
      	 		}//end foreach		 	
 				//$array_combinaciones a cambiar
 				if(sizeof($array_combinaciones)>0){
+					
 				//recorro $array_combinaciones para ver en $palabra cuantlas letras hay de cada $key
 				//repeticiones de $key en palabra
 			
 				//metodo que devuelve el array $numero iguales, con las posiciones [0] y[1] rellenas
-				/**
-				 * $numeroIguales[key][0] = numero de veces que aparece
-				 * $numeroiguales[key][1] = por lo que lo sustituimos
-				 * $numeroIguales[key][2] = las posiciones donde aparece;
-				 * */
-					/*$tiempoNumVeces1 = microtime(true);
-					$numeroIguales = array();
-		    		calculoNumeroVeces($palabra,$array_combinaciones,$array_sustituciones,$numeroIguales);
-					$tiempoNumVeces2 = microtime(true);
-					$tiempoNumVeces3 = $tiempoNumVeces2-$tiempoNumVeces1;*/
-					//guardo las posiciones donde aparece cada letra.
-					//nuevo
+				
 				/**
 				 * $numeroIguales[key][0] = numero de veces que aparece
 				 * $numeroiguales[key][1] = por lo que lo sustituimos
@@ -186,92 +176,95 @@ function calles_correos_autocomplete($string = '', $provincia){
 					$tiempoNumCombinaciones2 = microtime(true);
 					$tiempoNumCombinaciones3 = $tiempoNumCombinaciones2-$tiempoNumCombinaciones;
 
-					if($numeroCombinaciones<$totalCombinacionesPalabra){
 					//$array_comb contendrá todas las combinaciones de la palabra con los patrones.
 					//hacemos combinaciones si la palabra es >2 
-					$array_comb=combinaciones($combinar);
-			    	$tiempoTodasCombinaciones = microtime(true);
+					if($numeroCombinaciones<$totalCombinacionesPalabra){
+						$array_comb=combinaciones($combinar);
+			    		$tiempoTodasCombinaciones = microtime(true);
 				
-					foreach($array_comb as $keyArrayComb => $valorArrayComb){
-						$tiempoSustituciones = microtime(true);
-						//separo por la coma la cadena para luego buscar en array de combinaciones la posicion que necesito
-				   		$array2 = explode('|' , $valorArrayComb);
-				 		$j2 = 0;
-				 		$reemplazo = array();
-				   		foreach($array_combinaciones as $key  => $value){ //$array_combinaciones
+						foreach($array_comb as $keyArrayComb => $valorArrayComb){
+							$tiempoSustituciones = microtime(true);
+							//separo por la coma la cadena para luego buscar en array de combinaciones la posicion que necesito
+				   			$array2 = explode('|' , $valorArrayComb);
+				 			$j2 = 0;
+				 			$reemplazo = array();
+				   			foreach($array_combinaciones as $key  => $value){ //$array_combinaciones
 				   		
-				   			$total = $numeroIguales[$key][0];			
-				   			for($totalpos = 0;$totalpos<$total;$totalpos++){
-				   				$reemplazo[$key][] =$array_posiciones[$value][$array2[$j2]];
-				   				$j2++;
-				   			}
+				   				$total = $numeroIguales[$key][0];			
+				   				for($totalpos = 0;$totalpos<$total;$totalpos++){
+				   					$reemplazo[$key][] =$array_posiciones[$value][$array2[$j2]];
+				   					$j2++;
+				   				}
 				   			
-				   		}
-						$tiempoSustituciones2 = microtime(true);
-						$tiempoSustituciones3 = $tiempoSustituciones2-$tiempoSustituciones;			   		
-				   	//en $reemplazo ya tengo según la clave, el valor a sustituir.
-				   		$cadenaSustitucion  = $palabra;
-				   
-				  		$var_anterior = 0;	
-				  		$arrayOrdenado = array();	
-				  		/**
-				  		 * $arrayOrdenado ordena ascendentemente por el numero de posicion 
-				  		   $arrayOrdenado[1] significa que es en la posicion 1 donde cambiamos
-				  			será:
-				  			$arrayOrdenado[1][0] = 'valor de la clave'
-				  		    $arrayOrdenado[1][1] = 'Valor por el que sustituimos'.
-				  		 */
-				  		ordenarNumeroIguales($numeroIguales,$arrayOrdenado,$reemplazo);   	//en $arrayOrdenado
-				   		 foreach($arrayOrdenado as $clave => $valor){
-				   		 	$posicion = 0;
-				   		 	//$clave será la posicion a cambiar;
-				   		 	$caracter = $valor[1];
-				   		 	$longitud = mb_strlen($valor[1]);
-				   		 	$longitudClave = mb_strlen($valor[0]); //valor de la clave antigua
-				   		 	$start = $clave+$var_anterior; //$clave es la posicion donde se encuentra	
-				   		 	$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter, $start,$longitudClave);
-				   			$var_anterior += $longitud-$longitudClave;
-				   			$posicion++;
-				   		 }
+				   			}
+							$tiempoSustituciones2 = microtime(true);
+							$tiempoSustituciones3 = $tiempoSustituciones2-$tiempoSustituciones;			   		
+				   			//en $reemplazo ya tengo según la clave, el valor a sustituir.
+				   			$cadenaSustitucion  = $palabra;
+				  			$var_anterior = 0;	
+				  			$arrayOrdenado = array();	
+				  			/**
+				  			 * $arrayOrdenado ordena ascendentemente por el numero de posicion 
+				  		 	   $arrayOrdenado[1] significa que es en la posicion 1 donde cambiamos
+				  			   será:
+				  		   	   $arrayOrdenado[1][0] = 'valor de la clave'
+				  		       $arrayOrdenado[1][1] = 'Valor por el que sustituimos'.
+				  		    */
+				  			ordenarNumeroIguales($numeroIguales,$arrayOrdenado,$reemplazo);   	//en $arrayOrdenado
+				   		 	foreach($arrayOrdenado as $clave => $valor){
+				   		 		$posicion = 0;
+				   		 		//$clave será la posicion a cambiar;
+				   		 		$caracter = $valor[1];
+				   		 		$longitud = mb_strlen($valor[1]);
+				   		 		$longitudClave = mb_strlen($valor[0]); //valor de la clave antigua
+				   		 		$start = $clave+$var_anterior; //$clave es la posicion donde se encuentra	
+				   		 		$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter, $start,$longitudClave);
+				   				$var_anterior += $longitud-$longitudClave;
+				   				$posicion++;
+				   		 	}
 				   		
-					//cuando termino todos los cambios sobre la palabra, la voy guardando en mi array de cambios.
-				   	//para evitar que haya duplicados
-				    //sensible a mayusculas y minusculas, pero como está en mayusculas, no problema.
-					if(!in_array($cadenaSustitucion,$array_cambios))
-				   		//verifico que la combinacion que venga, no esté ya en el array de cambios.
-				   			$array_cambios[] = $cadenaSustitucion;
+							//cuando termino todos los cambios sobre la palabra, la voy guardando en mi array de cambios.
+				   			//para evitar que haya duplicados
+				    		//sensible a mayusculas y minusculas, pero como está en mayusculas, no problema.
+				    		//verifico que la combinacion que venga, no esté ya en el array de cambios.
+							
+				   		 	if(!in_array($cadenaSustitucion,$array_cambios))
+			   					$array_cambios[] = $cadenaSustitucion;
 					
-				   	//ya hemos guardado esa palabra, ahora ya las posiciones ocupadas de la anterior palabra no nos interesan
-					unset($posicionesOcupadas);
-					}	//end foreach
+				   			//ya hemos guardado esa palabra, ahora ya las posiciones ocupadas de la anterior palabra no nos interesan
+							unset($posicionesOcupadas);
+						}	//end foreach
 				
-			    	$delimitador = $ultimaPalabra?"* ":" ";
-					$cadenaBusqueda.= implode($delimitador,$array_cambios);
+			    		$delimitador = $ultimaPalabra?"* ":" ";
+						$cadenaBusqueda.= implode($delimitador,$array_cambios);
 						
 					}//endif $numeroCombinaciones<$totalCombinacionesPalabra
 			
-				$cadenaBusqueda .= $ultimaPalabra?"*)":") ";
-				//vacío el array_combinaciones para guardar solo las combinaciones de lo que necesito de la siguiente palabra-.
-				unset($array_combinaciones);
-				unset($array_cambios);
-				unset($combinar);
-				unset($numeroIguales);
+					$cadenaBusqueda .= $ultimaPalabra?"*)":") ";
+					//vacío el array_combinaciones para guardar solo las combinaciones de lo que necesito de la siguiente palabra-.
+					unset($array_combinaciones);
+					unset($array_cambios);
+					unset($combinar);
+					unset($numeroIguales);
 					
-			}//end if sizeof($array_combinaciones)
-			else{
-				if(strlen($palabra)>=2)
-					if($ultimaPalabra)
+				}//end if sizeof($array_combinaciones)
+				else{
+					
+					if(strlen($palabra)>=2 && $ultimaPalabra)
 						$cadenaBusqueda = $cadenaBusqueda.$palabra. '*) ';
-			}
-		 }//endif  if($longPalabra>2 && !in_array($palabra,$opcionales) || ($longPalabra<=3 && $ultimaPalabra)){
-	  }//endfor inicial
+					else if(!$ultimaPalabra){
+						$cadenaBusqueda = $cadenaBusqueda.$palabra.') ';
+						unset($array_cambios); //no me interesa guardar esa palabra
+					}
+				}
+		 	}//endif  if($longPalabra>2 && !in_array($palabra,$opcionales) || ($longPalabra<=3 && $ultimaPalabra)){
+	  	}//endfor inicial
 
-	 	 $tiempoTodasCombinaciones2 = microtime(true);
-
-		 $inicioConsulta = microtime(true);
-		 $matches2 = calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$arrayId);
-		 $finalConsulta = microtime(true);
-      	 $matches = $matches1 + $matches2;
+	 $tiempoTodasCombinaciones2 = microtime(true);
+	 $inicioConsulta = microtime(true);
+	 $matches2 = calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$arrayId);
+	 $finalConsulta = microtime(true);
+     $matches = $matches1 + $matches2;
 	 
      }//if grande de numerocombinaciones
 	 //si busquedaExacta ya devuelve el maximo de registros permitidos ;
@@ -292,15 +285,38 @@ function calles_correos_autocomplete($string = '', $provincia){
    		$array_lev[$key] = levenshtein($cad,$value['viapobla']); //guardo todas las distancias de lev;
    	 
    	 asort($array_lev,SORT_NUMERIC); //ordena $array_lev de manera numerica de menor distancia de lev a mayor.
-   	 
+  
    	 foreach($array_lev as $keyLev=>$valueLev){
+   	 	//en $array_lev tendremos ya los valores de la busqueda ordenados por la distancia de levenshtein
 		 $array_lev[$keyLev] = $ordenacion[$keyLev];
    	 }
-   	 
-    //ordenar_distancia_lev($cad,levenshtein($cad,$value['viapobla']),$key,$matches); //copiaordenacion va por referencia &$copiaordenacion.
+   	//una vez ordenados por levenshtein, tenemos que ordenarlos por impar inferior.
+   	
+   	$inicioOrdenacionImpar = microtime(true); 
+   	$arrayGuardar = array();
+
+ 	foreach($array_lev as $claveLev=>$valorLev){
+ 		//se van guardando claves según la posicion en la que aparecen realmente. 
+ 		//no hace falta un nuevo array de posiciones.
+ 		$arrayGuardar[$valorLev['ciudad'].'|'.$valorLev['viapobla']][$valorLev['idregistro']] = $valorLev['nimparinf'];
+ 	}
+ 	//ordeno $arrayGuardar por imparinferior
+ 	foreach($arrayGuardar as $claveGuardar=>$valorGuardar){
+ 		asort($valorGuardar,SORT_NUMERIC); //ordena de menos a mas
+ 		$arrayGuardar[$claveGuardar] = $valorGuardar; //actualizo con los valores ordenados.
+ 	}
+ 	$arrayOrdenacion =array();
+	foreach($arrayGuardar as $clavePos=>$valorPos){
+		foreach($valorPos as $clave => $valor){
+			$arrayOrdenacion[$clave] = $array_lev[$clave];
+		}
+	}
+		
+ 	$finalOrdenacionImpar = microtime(true);
+  	$finalOrdenacion = microtime(true); 
+ 	//copiaordenacion va por referencia &$copiaordenacion.
  	$finalOrdenacionLev = microtime(true);
-   	$finalOrdenacionImpar = microtime(true);		
-   			
+  
     $finali = microtime(true); //tiempo total
 	$totali = $finali-$inicioi;
 	//tiempo consulta
@@ -313,13 +329,11 @@ function calles_correos_autocomplete($string = '', $provincia){
 	$totalOrdenacionImpar = $finalOrdenacionImpar - $inicioOrdenacionImpar;
     //tiempo en hacer todas las modificaciones de la palabra
     $tiempoTodasCombinaciones3 = $tiempoTodasCombinaciones2-$tiempoTodasCombinaciones;
-       
-    $memoria = memory_get_usage();
+   
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-   /* $array_devolver = array();
-   	foreach ($array_lev as $match){
-   		
+    /*$array_devolver = array();
+   	foreach ($arrayOrdenacion as $match){
    		$array_devolver[$match['idregistro']] =  		
 		  						 '<span class = "muestra_calle"><b>' . $match['tipovia'] . ' ' . '</b></span>' .
 		  												  '<span class = "muestra_viapobla">'  . $match['viapobla'] . ' ' . '</span>' .
@@ -370,7 +384,6 @@ function calculoPosiciones(&$numeroIguales,$palabra,&$array_sustituciones){
 		$posi = 0;
 		$posiciones = array();
 		$longitudClave = mb_strlen($clave);
-		
 		while(($posAparicion= mb_strpos($palabra,$clave,$posInicial))!== FALSE){
 			//caso que sea RR
 			//este if es para las claves, que pueden formar parte de otra clave, para que no cuente las posiciones dos veces, y por tanto, 
@@ -457,7 +470,7 @@ function calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$array
 	 $matches = array();
 	 $cadena = "(".implode($arrayId,',').")";
 	 $sqlInicial = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,".
-  				   "num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior,POSTALT.codlocalidad FROM {POSTALT}".
+  				   "num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}".
   				   " LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ".
   				   "LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE";
 	//la busqueda inicial no ha devuelto nada. Posibles errores gramaticales.	
@@ -467,15 +480,13 @@ function calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$array
 
   				$sql = $sqlInicial." idregistro NOT IN $cadena AND ".
   				       "(MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ".
-  				       "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC, ".
-  					   "viapobla,codlocalidad,num_impar_inferior ASC";
+  				       "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC";
   				//$cad tiene algo de la forma +isabel +la +catolica
   				$result = db_query_range($sql,array($cadenaBusqueda,$cadenaBusqueda), 0, 40);
 			}
 			else{
 				$sql = $sqlInicial." (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ".
-					   "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC, ".
-				       "viapobla,codlocalidad,num_impar_inferior ASC";
+					   "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC";
   				//$cad tiene algo de la forma +isabel +la +catolica
   				$result = db_query_range($sql,array($cadenaBusqueda,$cadenaBusqueda), 0, 40);
 			}
@@ -487,15 +498,13 @@ function calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$array
 		
 				$sql = $sqlInicial." idregistro NOT IN $cadena AND CODCIU.descripcion='%s' and ".
   					   "(MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ".
-  				       "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC, ".
-				       "viapobla,codlocalidad,num_impar_inferior ASC";
+  				       "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC";
  				$result = db_query_range($sql,array($provincia,$cadenaBusqueda,$cadenaBusqueda), 0, 40);
 			}
 			else {
 				$sql = $sqlInicial." CODCIU.descripcion='%s' and ".
   				       "(MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ".
-  				       "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC, ".
-				       "viapobla,codlocalidad,num_impar_inferior ASC";
+  				       "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC";
 				$result = db_query_range($sql,array($provincia,$cadenaBusqueda,$cadenaBusqueda), 0, 40);
 			}
 		
@@ -532,11 +541,11 @@ function busquedaExacta($cad){
 	$cad2 = $cad.'%';
 	//$cad3 = '"'.$cad.'"';
 	$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,".
-  		   "num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior,POSTALT.codlocalidad FROM {POSTALT} ".
+  		   "num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT} ".
   	       "LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ".
   		   "LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia WHERE ".
-		   "viapobla like '%s' ". 
-		   "ORDER BY viapobla,codlocalidad,num_impar_inferior ASC";
+		   "viapobla like '%s' "; 
+		  
 		   $result  = db_query_range($sql,$cad2,0,60);
      while ($calleCorreos = db_fetch_object($result)) {
     			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
