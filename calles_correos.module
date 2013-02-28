@@ -239,8 +239,10 @@ function calles_correos_autocomplete($string = '', $provincia){
 						$cadenaBusqueda.= implode($delimitador,$array_cambios);
 						
 					}//endif $numeroCombinaciones<$totalCombinacionesPalabra
-			
-					$cadenaBusqueda .= $ultimaPalabra?"*)":") ";
+					else
+						$cadenaBusqueda.=$palabra;
+						
+					$cadenaBusqueda .= $ultimaPalabra?"*)":") ";	
 					//vacío el array_combinaciones para guardar solo las combinaciones de lo que necesito de la siguiente palabra-.
 					unset($array_combinaciones);
 					unset($array_cambios);
@@ -311,7 +313,6 @@ function calles_correos_autocomplete($string = '', $provincia){
 			$arrayOrdenacion[$clave] = $array_lev[$clave];
 		}
 	}
-		
  	$finalOrdenacionImpar = microtime(true);
   	$finalOrdenacion = microtime(true); 
  	//copiaordenacion va por referencia &$copiaordenacion.
@@ -332,7 +333,7 @@ function calles_correos_autocomplete($string = '', $provincia){
    
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-    /*$array_devolver = array();
+  /*  $array_devolver = array();
    	foreach ($arrayOrdenacion as $match){
    		$array_devolver[$match['idregistro']] =  		
 		  						 '<span class = "muestra_calle"><b>' . $match['tipovia'] . ' ' . '</b></span>' .
