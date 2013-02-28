@@ -341,7 +341,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 	}
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-   $array_devolver = array();
+    /*$array_devolver = array();
    	foreach ($arrayOrdenacion as $match){
    		$array_devolver[$match['idregistro']] =  		
 		  						 '<span class = "muestra_calle"><b>' . $match['tipovia'] . ' ' . '</b></span>' .
@@ -355,8 +355,8 @@ function calles_correos_autocomplete($string = '', $provincia){
 			
 	}//end foreach
 	
-    drupal_json($array_devolver);
-  // return $copiaordenacion;
+    drupal_json($array_devolver);*/
+  return $copiaordenacion;
   
 }
 function ordenarNumeroIguales(&$numeroIguales,&$arrayOrdenado,&$reemplazo){
