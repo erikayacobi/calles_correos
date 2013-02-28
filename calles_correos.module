@@ -56,12 +56,12 @@ function calles_correos_devolver_poblacion($codigo){
 	return $query;
 }
 
-function calles_correos_autocomplete($string = '', $provincia){
+function calles_correos_autocomplete($string = '', $provincia = ''){
 	 //variable para controlar que se ejecuten los microtime o no.
 	 $depurar = TRUE;
 	 
-	 if($depurar)
-  	   $inicioi = microtime(true);
+	 if($depurar)  $inicioi = microtime(true);
+	 
   	 $totalLongitudMostrar = 60;
 	 $totalCombinacionesPalabra = 100;
      //elimino espacios en blanco del final del string
@@ -106,8 +106,9 @@ function calles_correos_autocomplete($string = '', $provincia){
 		 $array_posiciones[] = array('N','Ñ');
  	 
 		 $array_sustituciones = array(); //array donde tendremos por cada clave, la posicion donde se encuentra en $array_posiciones
-		 if($depurar)
-			 $tiempo1 = microtime(true);
+		 
+		 if($depurar)  $tiempo1 = microtime(true);
+		 
 		 foreach($array_posiciones as $key => $value){
 		 	foreach($value as $key2 => $value2){
 		 		$array_sustituciones[$value2] = $key;
@@ -155,17 +156,17 @@ function calles_correos_autocomplete($string = '', $provincia){
 				 * $numeroiguales[key][1] = por lo que lo sustituimos
 				 * $numeroIguales[key][2] = las posiciones donde aparece;
 				 * */ 
-					if($depurar)
-						$inicioPosiciones = microtime(true);
+					if($depurar)  $inicioPosiciones = microtime(true);
 						
 					calculoPosiciones($numeroIguales,$palabra,$array_sustituciones); //paso por referencia $numeroIguales y $array_sustituciones
-					if($depurar)
+					
+					if($depurar) {
 						$finalPosiciones = microtime(true);
-					$totalPosiciones = $finalPosiciones-$inicioPosiciones;
+						$totalPosiciones = $finalPosiciones-$inicioPosiciones;
+					}
 					//obtengo el numero de valores de cada posicion del array de combinaciones
 					$combinar = array();
-					if($depurar)
-						$tiempoNumCombinaciones = microtime(true);
+					if($depurar)  $tiempoNumCombinaciones = microtime(true);
 						
 					$numeroCombinaciones = 1;
 					//en combinar guardo las posibilidades que hay en cada
@@ -179,20 +180,19 @@ function calles_correos_autocomplete($string = '', $provincia){
 						}
 					}
 					//calcula el numero de combinaciones total, por cada palabra.
-					if($depurar)
+					if($depurar){
 						$tiempoNumCombinaciones2 = microtime(true);
-					$tiempoNumCombinaciones3 = $tiempoNumCombinaciones2-$tiempoNumCombinaciones;
+						$tiempoNumCombinaciones3 = $tiempoNumCombinaciones2-$tiempoNumCombinaciones;	
+					}  
 
 					//$array_comb contendrá todas las combinaciones de la palabra con los patrones.
 					//hacemos combinaciones si la palabra es >2 
 					if($numeroCombinaciones<$totalCombinacionesPalabra){
 						$array_comb=combinaciones($combinar);
-			    		if($depurar)
-							$tiempoTodasCombinaciones = microtime(true);
+			    		if($depurar)  $tiempoTodasCombinaciones = microtime(true);
 				
 						foreach($array_comb as $keyArrayComb => $valorArrayComb){
-							if($depurar)
-								$tiempoSustituciones = microtime(true);
+							if($depurar)  $tiempoSustituciones = microtime(true);
 							//separo por la coma la cadena para luego buscar en array de combinaciones la posicion que necesito
 				   			$array2 = explode('|' , $valorArrayComb);
 				 			$j2 = 0;
@@ -206,9 +206,10 @@ function calles_correos_autocomplete($string = '', $provincia){
 				   				}
 				   			
 				   			}
-				   			if($depurar)
-								$tiempoSustituciones2 = microtime(true);
-							$tiempoSustituciones3 = $tiempoSustituciones2-$tiempoSustituciones;			   		
+				   			if($depurar){
+				   				$tiempoSustituciones2 = microtime(true);
+								$tiempoSustituciones3 = $tiempoSustituciones2-$tiempoSustituciones;		
+				   			} 	   		
 				   			//en $reemplazo ya tengo según la clave, el valor a sustituir.
 				   			$cadenaSustitucion  = $palabra;
 				  			$var_anterior = 0;	
@@ -272,9 +273,9 @@ function calles_correos_autocomplete($string = '', $provincia){
 	 	$inicioConsulta = microtime(true);
 	 }
 	 $matches2 = calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$arrayId);
-	 if($depurar)
-	 	$finalConsulta = microtime(true);
-     $matches = $matches1 + $matches2;
+	 if($depurar)  $finalConsulta = microtime(true);
+	 
+     $matches = $matches1 + $matches2; //guardamos en matches lo encontrado en busquedaExacta($matches1) y en la busqueda del full text($matches2)
 	 
      }//if grande de numerocombinaciones
 	 //si busquedaExacta ya devuelve el maximo de registros permitidos ;
@@ -306,8 +307,7 @@ function calles_correos_autocomplete($string = '', $provincia){
  		 $arrayGuardar[$ordenacion[$keyLev]['ciudad'].'|'.$ordenacion[$keyLev]['viapobla']][$ordenacion[$keyLev]['idregistro']] = $ordenacion[$keyLev]['nimparinf'];
    	 }
    	//una vez ordenados por levenshtein, tenemos que ordenarlos por impar inferior.
-   	if($depurar)
-   		$inicioOrdenacionImpar = microtime(true); 
+   	if($depurar)  $inicioOrdenacionImpar = microtime(true); 
 
  	//ordeno $arrayGuardar por imparinferior
  	//y al pasar por referencia el valor &$valorGuardar, se actualiza directamente
@@ -341,7 +341,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 	}
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-    /*$array_devolver = array();
+  /*  $array_devolver = array();
    	foreach ($arrayOrdenacion as $match){
    		$array_devolver[$match['idregistro']] =  		
 		  						 '<span class = "muestra_calle"><b>' . $match['tipovia'] . ' ' . '</b></span>' .
@@ -356,7 +356,7 @@ function calles_correos_autocomplete($string = '', $provincia){
 	}//end foreach
 	
     drupal_json($array_devolver);*/
-  return $copiaordenacion;
+  return $arrayOrdenacion;
   
 }
 function ordenarNumeroIguales(&$numeroIguales,&$arrayOrdenado,&$reemplazo){
