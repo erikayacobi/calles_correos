@@ -251,15 +251,11 @@ function calles_correos_autocomplete($string = '', $provincia){
 					
 				}//end if sizeof($array_combinaciones)
 				else{
-					
-					if(strlen($palabra)>=2 && $ultimaPalabra)
-						$cadenaBusqueda = $cadenaBusqueda.$palabra. '*) ';
-					else if(!$ultimaPalabra){
-						$cadenaBusqueda = $cadenaBusqueda.$palabra.') ';
+					$cadenaBusqueda .= $ultimaPalabra?$palabra."*) ":$palabra.") ";
+					if(!$ultimaPalabra)
 						unset($array_cambios); //no me interesa guardar esa palabra
-					}
 				}
-		 	}//endif  if($longPalabra>2 && !in_array($palabra,$opcionales) || ($longPalabra<=3 && $ultimaPalabra)){
+		 	}//endif  if(!in_array($palabra,$opcionales) ||  $ultimaPalabra){
 	  	}//endfor inicial
 
 	 $tiempoTodasCombinaciones2 = microtime(true);
@@ -333,7 +329,7 @@ function calles_correos_autocomplete($string = '', $provincia){
    
 	// Quitar desde array_devolver hasta drupal_json 
 	//descomentar return 
-  /*  $array_devolver = array();
+   /* $array_devolver = array();
    	foreach ($arrayOrdenacion as $match){
    		$array_devolver[$match['idregistro']] =  		
 		  						 '<span class = "muestra_calle"><b>' . $match['tipovia'] . ' ' . '</b></span>' .
