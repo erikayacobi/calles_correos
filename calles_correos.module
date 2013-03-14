@@ -1,5 +1,8 @@
 <?php
 
+define('CORREOS_MAX_REGISTROS_MOSTRAR', 60);
+define('CORREOS_MAX_COMBINACIONES_PALABRA', 100);
+
 function calles_correos_existe_registro_id($id){
 	$sql = "SELECT idregistro FROM {POSTALT} WHERE idregistro = %d";
 	$result = db_result(db_query($sql,$id));
@@ -20,6 +23,19 @@ function calles_correos_devolver_tipo_via($codigo){
 	
 	return $query;
 }
+
+function calles_correos_existe_direccion($tipovia,$calle, $codigo_postal, $localidad){
+	$existe =false;
+	if (strlen($codigo_postal)>3 && is_numeric($codigo_postal) &&  strlen($localidad)>1 && strlen($calle)>0){
+		$tipovia = mb_strtoupper($tipovia);
+		//if ($tipovia == 'CL') $tipovia = '';
+		$sql = "SELECT ciu.descripcion FROM {POSTALT} pos LEFT JOIN {CODCIU} ciu ON pos.codlocalidad = ciu.codlocalidad WHERE ".
+			"pos.codigo_postal = %d AND pos.codvia = '%s' AND pos.viapobla = '%s' AND ciu.descripcion = '%s'";
+		$result = db_result(db_query($sql, intval($codigo_postal,10), $tipovia, mb_strtoupper($calle), mb_strtoupper($localidad)));
+		if($result !== false)$existe =true;;
+	}
+	return $existe;
+}
 function calles_correos_devolver_datos_registro($codigo){	
 	$sql = "SELECT POSTALT.codvia, POSTALT.viapobla, POSTALT.codigo_postal, CODCIU.descripcion FROM {POSTALT} ".
 			"LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ". 
@@ -28,42 +44,39 @@ function calles_correos_devolver_datos_registro($codigo){
 	$datos = array();
 	while ($data = db_fetch_array($result)){
 		$datos['localidad'] = $data['descripcion'];
-		$datos['codigo_postal'] = $data['codigo_postal'];
+		$datos['codigo_postal'] = str_pad($data['codigo_postal'],5,"0",STR_PAD_LEFT);;
 		$datos['calle'] = $data['viapobla'];	
 		$datos['tipovia'] = $data['codvia'];
-		if(is_null($data['codvia'])||empty($data['codvia']))$datos['tipovia'] = 'CL';
+		//if(is_null($data['codvia'])||empty($data['codvia']))$datos['tipovia'] = 'CL';
 	}
 	return $datos;
 }
 
 function calles_correos_devolver_via_codigo_registro($codigo){
-	
-	$query = db_result(db_query("SELECT viapobla FROM {POSTALT} ".
+
+	return db_result(db_query("SELECT viapobla FROM {POSTALT} ".
 								 "WHERE POSTALT.idregistro=%d", $codigo));
-	return $query;
 }
 
 function calles_correos_devolver_codigo_postal($codigo){
 	
-	$query = db_result(db_query("SELECT codigo_postal FROM {POSTALT} ".
+	return db_result(db_query("SELECT codigo_postal FROM {POSTALT} ".
 								"WHERE POSTALT.idregistro=%d", $codigo));
-	return $query;
 }
 function calles_correos_devolver_poblacion($codigo){
 
-	$query = db_result(db_query("SELECT CODCIU.descripcion FROM POSTALT,CODCIU where ".
+	return db_result(db_query("SELECT CODCIU.descripcion FROM POSTALT,CODCIU where ".
 	                            "POSTALT.codlocalidad = CODCIU.codlocalidad and POSTALT.idregistro = %d",$codigo));		
-	return $query;
 }
 
 function calles_correos_autocomplete($string = '', $provincia = ''){
 	 //variable para controlar que se ejecuten los microtime o no.
-	 $depurar = TRUE;
+	 $depurar = FALSE;
 	 
 	 if($depurar)  $inicioi = microtime(true);
 	 
-  	 $totalLongitudMostrar = 60;
-	 $totalCombinacionesPalabra = 100;
+  	
+	 //$totalCombinacionesPalabra = 100;
      //elimino espacios en blanco del final del string
      $string = rtrim($string);
      //convertir toda la cadena a mayusculas 
@@ -76,7 +89,7 @@ function calles_correos_autocomplete($string = '', $provincia = ''){
      //quito dobles espacios en blanco
      $cad = quitarDobleEspacioBlanco($cad); 
       //todo a mayusculas y sin tildes.
-     $matches1 = busquedaExacta($cad);
+     $matches1 = busquedaExacta($cad,$provincia);
      //guardo en $arrayId todos los Id's que hemos encontrado en la primera búsqueda.
      //teniendo en cuenta que $matches1, es un array cuyos índices son las claves
      $arrayId = array_keys($matches1);
@@ -90,20 +103,20 @@ function calles_correos_autocomplete($string = '', $provincia = ''){
 	 // como "cad" devuelve cadenas donde encuentre esa cadena de forma seguida en cualquier parte, 
 	 //si solo es una palabra, lo que no haya encontrado en la primera búsqueda no lo va a encontrar en la segunda
 	 $array_cambios = array();
-     if($longitud<$totalLongitudMostrar){
+     if($longitud<CORREOS_MAX_REGISTROS_MOSTRAR){
      	
 		 //CONSTRUCCION CADENA LIKE
 		 $cadena1 = $cad; 
-		 $array_posiciones = array();
-		 $array_posiciones[] = array('NB','MB','NV','MV');
-		 $array_posiciones[] = array ('NP','MP');
-		 $array_posiciones[] = array('TX','TZ','CH');
-		 $array_posiciones[] = array('GU','G','X','J');
-		 $array_posiciones[] = array('RR','R');
-		 $array_posiciones[] = array('V','B');
-		 $array_posiciones[] = array('LL','Y','I');
-		 $array_posiciones[] = array('C','K','QU');
-		 $array_posiciones[] = array('N','Ñ');
+		 $array_posiciones = array(
+		 			array('NB','MB','NV','MV'),
+		 			array ('NP','MP'),
+		 			array('TX','TZ','CH'),
+		 			array('GU','G','X','J'),
+		 			array('RR','R'),
+		 			array('V','B'),
+		 			array('LL','Y','I'),
+		 			array('C','K','QU'),
+		 			array('N','Ñ'));
  	 
 		 $array_sustituciones = array(); //array donde tendremos por cada clave, la posicion donde se encuentra en $array_posiciones
 		 
@@ -187,7 +200,7 @@ function calles_correos_autocomplete($string = '', $provincia = ''){
 
 					//$array_comb contendrá todas las combinaciones de la palabra con los patrones.
 					//hacemos combinaciones si la palabra es >2 
-					if($numeroCombinaciones<$totalCombinacionesPalabra){
+					if($numeroCombinaciones<CORREOS_MAX_COMBINACIONES_PALABRA){
 						$array_comb=combinaciones($combinar);
 			    		if($depurar)  $tiempoTodasCombinaciones = microtime(true);
 				
@@ -462,136 +475,94 @@ function combinaciones($combinar){
 function calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$arrayId){
 	
 	 $matches = array();
-	 $cadena = "(".implode($arrayId,',').")";
-	 $sqlInicial = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,".
-  				   "num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT}".
-  				   " LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ".
-  				   "LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  WHERE";
+	 $sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,PROV.nombre,".
+  				   "num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT} ".
+  				   "LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ".
+  				   "LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  ".
+	 			   "LEFT OUTER JOIN {PROV} ON POSTALT.provincia = PROV.id ".
+  				   "WHERE ";
 	//la busqueda inicial no ha devuelto nada. Posibles errores gramaticales.	
-		if(empty($provincia)){
-			
-			if(!empty($arrayId)){
-
-  				$sql = $sqlInicial." idregistro NOT IN $cadena AND ".
-  				       "(MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ".
-  				       "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC";
-  				//$cad tiene algo de la forma +isabel +la +catolica
-  				$result = db_query_range($sql,array($cadenaBusqueda,$cadenaBusqueda), 0, 40);
-			}
-			else{
-				$sql = $sqlInicial." (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ".
-					   "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC";
-  				//$cad tiene algo de la forma +isabel +la +catolica
-  				$result = db_query_range($sql,array($cadenaBusqueda,$cadenaBusqueda), 0, 40);
-			}
-  		
-		}
-		else {
 	
-			if(!empty($arrayId)){
-		
-				$sql = $sqlInicial." idregistro NOT IN $cadena AND CODCIU.descripcion='%s' and ".
-  					   "(MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ".
+	 if(!empty($arrayId)){
+	 	$cadena = "(".implode($arrayId,',').")";
+	 	$sql.=  "idregistro NOT IN $cadena AND ";
+	 }
+	 if(!empty($provincia))$sql.=  "provincia = $provincia AND ";
+	 
+	 $sql.= "(MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ".
   				       "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC";
- 				$result = db_query_range($sql,array($provincia,$cadenaBusqueda,$cadenaBusqueda), 0, 40);
-			}
-			else {
-				$sql = $sqlInicial." CODCIU.descripcion='%s' and ".
-  				       "(MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ".
-  				       "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC";
-				$result = db_query_range($sql,array($provincia,$cadenaBusqueda,$cadenaBusqueda), 0, 40);
-			}
-		
-		}
+	 
+	 
+	 
+	 $result = db_query_range($sql,array($cadenaBusqueda,$cadenaBusqueda), 0, CORREOS_MAX_REGISTROS_MOSTRAR - count($arrayId) );
+
     	 // only 15 results will show
     		while ($calleCorreos = db_fetch_object($result)) {
     			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
-    			if($calleCorreos->descvia==null){
-					$calle = "CALLE";
-				}
-				else{
-					$calle = $calleCorreos->descvia;
-				}
-		  		$matches[$calleCorreos->idregistro] = array("tipovia" => $calle, 
+		  		$matches[$calleCorreos->idregistro] = array("tipovia" => $calleCorreos->descvia, 
 		  		 				                      "viapobla" => $calleCorreos->viapobla,
 		  		 				                      "idregistro" => $calleCorreos->idregistro,
-		  		 			                          "codigo_postal" => $calleCorreos->codigo_postal,
+		  		 			                          "codigo_postal" => str_pad($calleCorreos->codigo_postal,5,"0",STR_PAD_LEFT),
 		  		 				                      "ciudad" => $calleCorreos->descripcion,
 		  						                      "nimparinf" => $calleCorreos->num_impar_inferior,
 		  						                      "nimparsup" => $calleCorreos->num_impar_superior,
 		  						                      "nparinf" => $calleCorreos->num_par_inferior,
-		  						                      "nparsup" => $calleCorreos-> num_par_superior);  		
+		  						                      "nparsup" => $calleCorreos-> num_par_superior,
+		  											  "provincia" => $calleCorreos-> nombre);  			
 		    } //end while
 
 	return $matches;
 	
 }
 
-function busquedaExacta($cad){
+function busquedaExacta($cad, $provincia = ''){
 	//tenemos que poner la $cad de manera que en la primera búsqueda encuentre la cadena tal cual, por tanto, utilizo 
 	//". Luego ya buscaré que contenga la palabra en cualquier punto. 
 	
 	$matches = array();
-	$cad2 = $cad.'%';
+	//$cad2 = $cad.'%';
 	//$cad3 = '"'.$cad.'"';
-	$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,".
+	$sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,PROV.nombre,".
   		   "num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT} ".
   	       "LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ".
-  		   "LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia WHERE ".
-		   "viapobla like '%s' "; 
+  		   "LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia ".
+  		   "LEFT OUTER JOIN {PROV} ON POSTALT.provincia = PROV.id ".
+  		   "WHERE ";
+
+  		   
+	if ($provincia != '')$sql.= "provincia = ".$provincia." AND ";
+	$sql.="viapobla like '%s' "; 
 		  
-		   $result  = db_query_range($sql,$cad2,0,60);
+	$result  = db_query_range($sql,$cad.'%',0,CORREOS_MAX_REGISTROS_MOSTRAR);
      while ($calleCorreos = db_fetch_object($result)) {
     			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
-    			if($calleCorreos->descvia==null){
-					$calle = "CALLE";
-				}
-				else{
-					$calle = $calleCorreos->descvia;
-				}
-		  		$matches[$calleCorreos->idregistro] = array("tipovia" => $calle, 
+		  		$matches[$calleCorreos->idregistro] = array("tipovia" => $calleCorreos->descvia, 
 		  		 				                      "viapobla" => $calleCorreos->viapobla,
 		  		 				                      "idregistro" => $calleCorreos->idregistro,
-		  		 			                          "codigo_postal" => $calleCorreos->codigo_postal,
+		  		 			                          "codigo_postal" => str_pad($calleCorreos->codigo_postal,5,"0",STR_PAD_LEFT),
 		  		 				                      "ciudad" => $calleCorreos->descripcion,
 		  						                      "nimparinf" => $calleCorreos->num_impar_inferior,
 		  						                      "nimparsup" => $calleCorreos->num_impar_superior,
 		  						                      "nparinf" => $calleCorreos->num_par_inferior,
-		  						                      "nparsup" => $calleCorreos-> num_par_superior);  		
+		  						                      "nparsup" => $calleCorreos-> num_par_superior,
+		  											  "provincia" => $calleCorreos-> nombre);  		
     } //end while
-
 	return $matches;
      
 }
 
 
 function quitarDobleEspacioBlanco($cadena){
-	$cadcopia = $cadena;
-	while(strpos($cadcopia,'  ')!==FALSE){
-		$cadcopia = str_replace('  ',' ',$cadcopia);
-	}
-	return $cadcopia;
+	while(strpos($cadena,'  ')!==FALSE)$cadena = str_replace('  ',' ',$cadena);
+	return $cadena;
 }
 
 
 //ELIMINAR TILDES PALABRA ORIGINAL CASTELLANAS, CATALANAS Y DIERESIS
 function calles_correos_eliminar_tildes($string){
-	
-	$cadena1 = $string;
-	$patrones = array();
-		$patrones[] = '/(Á|À|Ä)/';
-		$patrones[] = '/(É|È|Ë)/';
-		$patrones[] = '/(Í|Ì|Ï)/';
-		$patrones[] = '/(Ó|Ò|Ö)/';
-		$patrones[] = '/(Ú|Ù|Ü)/';
-	$sustituciones = array();
-		$sustituciones[] = 'A';
-		$sustituciones[] = 'E';
-		$sustituciones[] = 'I';
-		$sustituciones[] = 'O';
-		$sustituciones[] = 'U';
-	$cadena = preg_replace ($patrones, $sustituciones,$cadena1);
-	return $cadena;
+	$patrones = array('/(Á|À|Ä)/','/(É|È|Ë)/','/(Í|Ì|Ï)/','/(Ó|Ò|Ö)/','/(Ú|Ù|Ü)/');
+	$sustituciones = array('A','E','I','O','U');
+	return preg_replace ($patrones, $sustituciones,$string);
 }
 
 
