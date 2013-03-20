@@ -2,6 +2,7 @@
 
 define('CORREOS_MAX_REGISTROS_MOSTRAR', 60);
 define('CORREOS_MAX_COMBINACIONES_PALABRA', 100);
+define('CORREOS_MAX_BUSQUEDA_CANTIDAD', 500);
 
 function calles_correos_existe_registro_id($id){
 	$sql = "SELECT idregistro FROM {POSTALT} WHERE idregistro = %d";
@@ -69,27 +70,33 @@ function calles_correos_devolver_poblacion($codigo){
 	                            "POSTALT.codlocalidad = CODCIU.codlocalidad and POSTALT.idregistro = %d",$codigo));		
 }
 
-function calles_correos_autocomplete($string = '', $provincia = ''){
+function calles_correos_autocomplete($string = '', $provincia = '', $codigo_postal = '',&$info_coincidencias){
 	 //variable para controlar que se ejecuten los microtime o no.
 	 $depurar = FALSE;
-	 
+	 $num_coincidencias_exactas_total = 0;
+	 $num_coincidencias_similares_total = 0;
+	 $num_coincidencias_exactas_mostradas = 0;
+	 $num_coincidencias_similares_mostradas = 0;
 	 if($depurar)  $inicioi = microtime(true);
 	 
   	
 	 //$totalCombinacionesPalabra = 100;
      //elimino espacios en blanco del final del string
-     $string = rtrim($string);
+    
      //convertir toda la cadena a mayusculas 
-     $string = mb_strtoupper($string); //para que no haya problemas como con el strtoupper al pasar a mayusculas con la letra ñ.
+     $string = mb_strtoupper(rtrim($string)); //para que no haya problemas como con el strtoupper al pasar a mayusculas con la letra ñ.
      //eliminar tildes
-     $cad = calles_correos_eliminar_tildes($string);
+    
      //a la hora de hacer la comparación para autocompletar es donde tendré que ver si ha encontrado alguna cadena
      //igual a lo intruducido. Si no, entonces hacemos las posibles búsquedas por los patrones. 
     
      //quito dobles espacios en blanco
-     $cad = quitarDobleEspacioBlanco($cad); 
+     $cad = calles_correos_quitarDobleEspacioBlanco(calles_correos_eliminar_tildes($string)); 
       //todo a mayusculas y sin tildes.
-     $matches1 = busquedaExacta($cad,$provincia);
+    
+     
+     $matches1 =calles_correos_busqueda_coincidencias($cad,true, $provincia,$codigo_postal,$num_coincidencias_exactas_mostradas,$num_coincidencias_exactas_total);
+     
      //guardo en $arrayId todos los Id's que hemos encontrado en la primera búsqueda.
      //teniendo en cuenta que $matches1, es un array cuyos índices son las claves
      $arrayId = array_keys($matches1);
@@ -201,7 +208,7 @@ function calles_correos_autocomplete($string = '', $provincia = ''){
 					//$array_comb contendrá todas las combinaciones de la palabra con los patrones.
 					//hacemos combinaciones si la palabra es >2 
 					if($numeroCombinaciones<CORREOS_MAX_COMBINACIONES_PALABRA){
-						$array_comb=combinaciones($combinar);
+						$array_comb=calles_correos_combinaciones($combinar);
 			    		if($depurar)  $tiempoTodasCombinaciones = microtime(true);
 				
 						foreach($array_comb as $keyArrayComb => $valorArrayComb){
@@ -234,7 +241,7 @@ function calles_correos_autocomplete($string = '', $provincia = ''){
 				  		   	   $arrayOrdenado[1][0] = 'valor de la clave'
 				  		       $arrayOrdenado[1][1] = 'Valor por el que sustituimos'.
 				  		    */
-				  			ordenarNumeroIguales($numeroIguales,$arrayOrdenado,$reemplazo);   	//en $arrayOrdenado
+				  			calles_correos_combinaciones($numeroIguales,$arrayOrdenado,$reemplazo);   	//en $arrayOrdenado
 				   		 	foreach($arrayOrdenado as $clave => $valor){
 				   		 		$posicion = 0;
 				   		 		//$clave será la posicion a cambiar;
@@ -242,7 +249,7 @@ function calles_correos_autocomplete($string = '', $provincia = ''){
 				   		 		$longitud = mb_strlen($valor[1]);
 				   		 		$longitudClave = mb_strlen($valor[0]); //valor de la clave antigua
 				   		 		$start = $clave+$var_anterior; //$clave es la posicion donde se encuentra	
-				   		 		$cadenaSustitucion = mb_substr_replace($cadenaSustitucion, $caracter, $start,$longitudClave);
+				   		 		$cadenaSustitucion = calles_correos_mb_substr_replace($cadenaSustitucion, $caracter, $start,$longitudClave);
 				   				$var_anterior += $longitud-$longitudClave;
 				   				$posicion++;
 				   		 	}
@@ -285,7 +292,7 @@ function calles_correos_autocomplete($string = '', $provincia = ''){
 	 	$tiempoTodasCombinaciones2 = microtime(true);
 	 	$inicioConsulta = microtime(true);
 	 }
-	 $matches2 = calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$arrayId);
+	 $matches2 = calles_correos_busqueda_coincidencias($cadenaBusqueda,false,$provincia,$codigo_postal,$num_coincidencias_similares_mostradas,$num_coincidencias_similares_total,$arrayId);
 	 if($depurar)  $finalConsulta = microtime(true);
 	 
      $matches = $matches1 + $matches2; //guardamos en matches lo encontrado en busquedaExacta($matches1) y en la busqueda del full text($matches2)
@@ -369,10 +376,33 @@ function calles_correos_autocomplete($string = '', $provincia = ''){
 	}//end foreach
 	
     drupal_json($array_devolver);*/
+	
+	//CORREOS_MAX_REGISTROS_MOSTRAR
+	
+	
+	if (($num_coincidencias_exactas_total > CORREOS_MAX_REGISTROS_MOSTRAR) ||
+		(($num_coincidencias_exactas_total == 0)&& ($num_coincidencias_similares_total >CORREOS_MAX_REGISTROS_MOSTRAR))){
+			$info_coincidencias['necesario_filtro']= TRUE; 
+	}
+	else{
+		$info_coincidencias['necesario_filtro']= FALSE; 
+	}	
+	
+	if ($num_coincidencias_exactas_total == CORREOS_MAX_BUSQUEDA_CANTIDAD)$num_coincidencias_exactas_total.='+';
+	if ($num_coincidencias_similares_total == CORREOS_MAX_BUSQUEDA_CANTIDAD)$num_coincidencias_similares_total.='+';
+	
+	$info_coincidencias['exactas_totales'] = $num_coincidencias_exactas_total;
+	$info_coincidencias['exactas_mostradas'] = $num_coincidencias_exactas_mostradas;
+	$info_coincidencias['similares_totales'] = $num_coincidencias_similares_total;
+	$info_coincidencias['similares_mostradas'] = $num_coincidencias_similares_mostradas;
+	
+	
+	
+	
   return $arrayOrdenacion;
   
 }
-function ordenarNumeroIguales(&$numeroIguales,&$arrayOrdenado,&$reemplazo){
+function calles_correos_ordenarNumeroIguales(&$numeroIguales,&$arrayOrdenado,&$reemplazo){
 	foreach($numeroIguales as $clave => $valor){
 		$posicion = 0;
 		foreach($valor[2] as $claveArrayPosiPalabra => $valorArrayPosiPalabra){
@@ -420,7 +450,7 @@ function calculoPosiciones(&$numeroIguales,$palabra,&$array_sustituciones){
 }
 
 
-function mb_substr_replace($string, $replacement, $start, $length = null, $encoding = null){
+function calles_correos_mb_substr_replace($string, $replacement, $start, $length = null, $encoding = null){
         if (extension_loaded('mbstring'))
         {
             $string_length = (is_null($encoding)) ? mb_strlen($string) : mb_strlen($string, $encoding);
@@ -448,7 +478,7 @@ function mb_substr_replace($string, $replacement, $start, $length = null, $encod
         return (is_null($length)) ? substr_replace($string, $replacement, $start) : substr_replace($string, $replacement, $start, $length);
 }
 
-function combinaciones($combinar){
+function calles_correos_combinaciones($combinar){
 
   $posibilidades = array();
   //estamos en el caso base.
@@ -459,7 +489,7 @@ function combinaciones($combinar){
  	 return $posibilidades;
   }
   else{
-    $combin_resto = combinaciones(array_slice($combinar,1));
+    $combin_resto = calles_correos_combinaciones(array_slice($combinar,1));
     $size = sizeOf($combin_resto) -1;
     do{
       $i = $size;
@@ -472,35 +502,59 @@ function combinaciones($combinar){
 }
 
 
-function calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$arrayId){
+function calles_correos_busqueda_coincidencias($cadenaBusqueda,$busquedaExacta, $provincia,$codigo_postal,&$num_coincidencias_mostradas,&$num_total_coincidencias,$arrayId=NULL){
 	
 	 $matches = array();
-	 $sql = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,PROV.nombre,".
-  				   "num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior FROM {POSTALT} ".
-  				   "LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ".
+	 $count_arrayID = 0;
+	 
+	 $sql_count = "SELECT COUNT(*) ";
+	 $sql_data = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,PROV.nombre,".
+  				   "num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior ";
+	 $sql_comun = "FROM {POSTALT} LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ".
   				   "LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  ".
 	 			   "LEFT OUTER JOIN {PROV} ON POSTALT.provincia = PROV.id ".
   				   "WHERE ";
 	//la busqueda inicial no ha devuelto nada. Posibles errores gramaticales.	
-	
-	 if(!empty($arrayId)){
-	 	$cadena = "(".implode($arrayId,',').")";
-	 	$sql.=  "idregistro NOT IN $cadena AND ";
+	$sql = $sql_data.$sql_comun;
+	//$sql_num_registro = $sql_count.$sql_comun;
+	 
+	 if(!empty($codigo_postal))$sql.=  "codigo_postal = $codigo_postal AND ";
+	 elseif(!empty($provincia))$sql.=  "provincia = $provincia AND ";
+	 
+	 if($busquedaExacta){
+	 	//$sql_like = "viapobla like '%s' ";
+	 	$sql_like = "viapobla = '%s' ";
+	 	$sql.=$sql_like; 
+	 	//$sql_num_registro.=$sql_like; 
+	 	$result  = db_query_range($sql,$cadenaBusqueda,0,CORREOS_MAX_BUSQUEDA_CANTIDAD);//CORREOS_MAX_REGISTROS_MOSTRAR
+	 	//$num_total_coincidencias = db_result(db_query($sql_num_registro,$cadenaBusqueda));
 	 }
-	 if(!empty($provincia))$sql.=  "provincia = $provincia AND ";
+	 else{
+	 	
+		 if(!empty($arrayId)){
+		 	$cadena = "(".implode($arrayId,',').")";
+		 	$sql.=  "idregistro NOT IN $cadena AND ";
+		 	$count_arrayID = count($arrayId) ;
+		 }
+		
+		 
+		 $sql_order_by = "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC";
+		 $sql_match = "(MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ";
+	 	$sql.= $sql_match.$sql_order_by;
+	 	//$sql_num_registro.=$sql_match; 
+  				      
+	 	 $result = db_query_range($sql,array($cadenaBusqueda,$cadenaBusqueda), 0, CORREOS_MAX_BUSQUEDA_CANTIDAD);//CORREOS_MAX_REGISTROS_MOSTRAR - count($arrayId) );
+	 	//$num_total_coincidencias = db_result(db_query($sql_num_registro,$cadenaBusqueda));
+	 }
 	 
-	 $sql.= "(MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) ".
-  				       "ORDER BY (MATCH(viapobla) AGAINST('%s' IN BOOLEAN MODE)) DESC";
-	 
-	 
-	 
-	 $result = db_query_range($sql,array($cadenaBusqueda,$cadenaBusqueda), 0, CORREOS_MAX_REGISTROS_MOSTRAR - count($arrayId) );
-
+	$calles_procesadas = 0; 
+	$restantes_mostrar = $busquedaExacta?CORREOS_MAX_REGISTROS_MOSTRAR: CORREOS_MAX_REGISTROS_MOSTRAR - $count_arrayID;
     	 // only 15 results will show
-    		while ($calleCorreos = db_fetch_object($result)) {
+    while ($calleCorreos = db_fetch_object($result)) {
     			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
-		  		$matches[$calleCorreos->idregistro] = array("tipovia" => $calleCorreos->descvia, 
-		  		 				                      "viapobla" => $calleCorreos->viapobla,
+    	if ($calles_procesadas++ < $restantes_mostrar){
+    		$matches[$calleCorreos->idregistro] = array("tipovia" => $calleCorreos->descvia, 
+		  		 				                    "viapobla" => $calleCorreos->viapobla,
 		  		 				                      "idregistro" => $calleCorreos->idregistro,
 		  		 			                          "codigo_postal" => str_pad($calleCorreos->codigo_postal,5,"0",STR_PAD_LEFT),
 		  		 				                      "ciudad" => $calleCorreos->descripcion,
@@ -508,13 +562,18 @@ function calles_correos_busqueda_coincidencias($cadenaBusqueda,$provincia,$array
 		  						                      "nimparsup" => $calleCorreos->num_impar_superior,
 		  						                      "nparinf" => $calleCorreos->num_par_inferior,
 		  						                      "nparsup" => $calleCorreos-> num_par_superior,
-		  											  "provincia" => $calleCorreos-> nombre);  			
-		    } //end while
-
+		  											  "provincia" => $calleCorreos-> nombre);  	
+    	}
+	
+	} //end while
+	
+	$num_total_coincidencias = $calles_procesadas;
+	$num_coincidencias_mostradas = count($matches);
+	
 	return $matches;
 	
 }
-
+/*
 function busquedaExacta($cad, $provincia = ''){
 	//tenemos que poner la $cad de manera que en la primera búsqueda encuentre la cadena tal cual, por tanto, utilizo 
 	//". Luego ya buscaré que contenga la palabra en cualquier punto. 
@@ -529,11 +588,13 @@ function busquedaExacta($cad, $provincia = ''){
   		   "LEFT OUTER JOIN {PROV} ON POSTALT.provincia = PROV.id ".
   		   "WHERE ";
 
-  		   
+	
+	
+	
 	if ($provincia != '')$sql.= "provincia = ".$provincia." AND ";
 	$sql.="viapobla like '%s' "; 
 		  
-	$result  = db_query_range($sql,$cad.'%',0,CORREOS_MAX_REGISTROS_MOSTRAR);
+	
      while ($calleCorreos = db_fetch_object($result)) {
     			//calle por defecto es vacío (viene en las hojas de comentarios de la bbdd
 		  		$matches[$calleCorreos->idregistro] = array("tipovia" => $calleCorreos->descvia, 
@@ -550,9 +611,9 @@ function busquedaExacta($cad, $provincia = ''){
 	return $matches;
      
 }
+*/
 
-
-function quitarDobleEspacioBlanco($cadena){
+function calles_correos_quitarDobleEspacioBlanco($cadena){
 	while(strpos($cadena,'  ')!==FALSE)$cadena = str_replace('  ',' ',$cadena);
 	return $cadena;
 }
