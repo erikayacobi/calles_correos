@@ -241,7 +241,7 @@ function calles_correos_autocomplete($string = '', $provincia = '', $codigo_post
 				  		   	   $arrayOrdenado[1][0] = 'valor de la clave'
 				  		       $arrayOrdenado[1][1] = 'Valor por el que sustituimos'.
 				  		    */
-				  			calles_correos_combinaciones($numeroIguales,$arrayOrdenado,$reemplazo);   	//en $arrayOrdenado
+				  			calles_correos_ordenarNumeroIguales($numeroIguales,$arrayOrdenado,$reemplazo);   	//en $arrayOrdenado
 				   		 	foreach($arrayOrdenado as $clave => $valor){
 				   		 		$posicion = 0;
 				   		 		//$clave será la posicion a cambiar;
