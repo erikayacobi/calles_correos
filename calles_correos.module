@@ -1,7 +1,7 @@
 <?php
 
 define('CORREOS_MAX_REGISTROS_MOSTRAR', 60);
-define('CORREOS_MAX_COMBINACIONES_PALABRA', 100);
+define('CORREOS_MAX_COMBINACIONES_PALABRA', 1000);
 define('CORREOS_MAX_BUSQUEDA_CANTIDAD', 500);
 
 function calles_correos_existe_registro_id($id){
@@ -115,15 +115,21 @@ function calles_correos_autocomplete($string = '', $provincia = '', $codigo_post
 		 //CONSTRUCCION CADENA LIKE
 		 $cadena1 = $cad; 
 		 $array_posiciones = array(
-		 			array('NB','MB','NV','MV'),
+		 			//array('NB','MB','NV','MV'),
 		 			array ('NP','MP'),
+		 			array('NB','MB'),
 		 			array('TX','TZ','CH'),
 		 			array('GU','G','X','J'),
 		 			array('RR','R'),
 		 			array('V','B'),
-		 			array('LL','Y','I'),
+		 			array('HI','LL','Y','I'),
 		 			array('C','K','QU'),
-		 			array('N','Ñ'));
+		 			array('NY','Ñ'),
+		 			array('HA','A'),
+		 			array('HE','E'),
+		 			array('HO','O'),
+		 			array('HU','U'),
+		 			);	//array('N','Ñ'));
  	 
 		 $array_sustituciones = array(); //array donde tendremos por cada clave, la posicion donde se encuentra en $array_posiciones
 		 
