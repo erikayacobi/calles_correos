@@ -15,7 +15,8 @@ function calles_correos_existe_registro_id($id){
 function calles_correos_devolver_tipo_via($codigo){
 	
 	$query = db_result(db_query("SELECT CODVIA.descvia FROM {POSTALT} ".
-							"LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia ".
+							"INNER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia ".
+							//"LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia ".
 							"WHERE POSTALT.idregistro=%d",$codigo));	
 	//si es vacio, se sabe por la documentacion de las tablas que es calle el tipo de via.
 	if(!empty($codigo) && $query==null && is_numeric($codigo)){
@@ -30,7 +31,7 @@ function calles_correos_existe_direccion($tipovia,$calle, $codigo_postal, $local
 	if (strlen($codigo_postal)>3 && is_numeric($codigo_postal) &&  strlen($localidad)>1 && strlen($calle)>0){
 		$tipovia = mb_strtoupper($tipovia);
 		//if ($tipovia == 'CL') $tipovia = '';
-		$sql = "SELECT ciu.descripcion FROM {POSTALT} pos LEFT JOIN {CODCIU} ciu ON pos.codlocalidad = ciu.codlocalidad WHERE ".
+		$sql = "SELECT ciu.descripcion FROM {POSTALT} pos INNER JOIN {CODCIU} ciu ON pos.codlocalidad = ciu.codlocalidad WHERE ".
 			"pos.codigo_postal = %d AND pos.codvia = '%s' AND pos.viapobla = '%s' AND ciu.descripcion = '%s'";
 		$result = db_result(db_query($sql, intval($codigo_postal,10), $tipovia, mb_strtoupper($calle), mb_strtoupper($localidad)));
 		if($result !== false)$existe =true;;
@@ -39,7 +40,7 @@ function calles_correos_existe_direccion($tipovia,$calle, $codigo_postal, $local
 }
 function calles_correos_devolver_datos_registro($codigo){	
 	$sql = "SELECT POSTALT.codvia, POSTALT.viapobla, POSTALT.codigo_postal, CODCIU.descripcion FROM {POSTALT} ".
-			"LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ". 
+			"INNER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ". 
 			"WHERE POSTALT.idregistro=%d";	
 	$result = db_query($sql, $codigo);
 	$datos = array();
@@ -516,9 +517,9 @@ function calles_correos_busqueda_coincidencias($cadenaBusqueda,$busquedaExacta, 
 	 $sql_count = "SELECT COUNT(*) ";
 	 $sql_data = "SELECT CODVIA.descvia,viapobla,idregistro,codigo_postal,CODCIU.descripcion,PROV.nombre,".
   				   "num_impar_inferior,num_impar_superior,num_par_inferior,num_par_superior ";
-	 $sql_comun = "FROM {POSTALT} LEFT OUTER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ".
-  				   "LEFT OUTER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  ".
-	 			   "LEFT OUTER JOIN {PROV} ON POSTALT.provincia = PROV.id ".
+	 $sql_comun = "FROM {POSTALT} INNER JOIN {CODCIU} ON POSTALT.codlocalidad = CODCIU.codlocalidad ".
+  				   "INNER JOIN {CODVIA} ON POSTALT.codvia = CODVIA.codvia  ".
+	 			   "INNER JOIN {PROV} ON POSTALT.provincia = PROV.id ".
   				   "WHERE ";
 	//la busqueda inicial no ha devuelto nada. Posibles errores gramaticales.	
 	$sql = $sql_data.$sql_comun;
